@@ -15,7 +15,13 @@ import { RiskMeter } from '@/components/risk-meter'
 import { WeatherFetcher } from '@/components/weather-fetcher'
 import { ProcessedWeatherData } from '@/lib/weather-api'
 import { CloudRain, Car, Map, Clock, AlertTriangle, CheckCircle, RefreshCw, UserCheck, Activity } from 'lucide-react'
-import { searchAlcoholDatabase } from '@/lib/alcohol-database'
+import {
+  searchAlcoholDatabase,
+  estimatePromil,
+  getWaitTimeHours,
+  getAlcoholRiskCategory,
+  LEGAL_LIMITS
+} from '@/lib/alcohol-database'
 
 /**
  * Get the current time context from the device
@@ -206,14 +212,14 @@ export function AccidentPredictionForm() {
             </div>
           </div>
 
-          {/* Step 2: Alcohol Consumption */}
+          {/* Step 2: Alcohol Consumption - Simplified */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm">
                 2
               </div>
               <div>
-                <h4 className={`font-semibold text-base flex items-center gap-2 ${(formData.alcohol_consumption === 'heavy' || formData.alcohol_consumption === 'severe') ? 'text-red-800' : 'text-gray-900'}`}>
+                <h4 className="font-semibold text-base flex items-center gap-2 text-gray-900">
                   🍺 Alkol Tüketimi
                 </h4>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -221,80 +227,46 @@ export function AccidentPredictionForm() {
                 </p>
               </div>
             </div>
-            
-            <div className={`ml-11 p-4 rounded-lg border-2 transition-all ${(formData.alcohol_consumption === 'heavy' || formData.alcohol_consumption === 'severe') ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="alcohol" className="text-sm font-medium text-gray-700 mb-2 block">
-                    Son 24 saat içinde alkol aldınız mı?
-                  </Label>
-                  <Select
-                    value={formData.alcohol_consumption}
-                    onValueChange={(value) => {
-                      handleInputChange('alcohol_consumption', value)
-                      if (value === 'none') {
+
+            <div className="ml-11 space-y-4">
+              {/* Simple Yes/No Checkbox */}
+              <div>
+                <Label className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.alcohol_consumption !== 'none'}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        handleInputChange('alcohol_consumption', 'none')
                         handleInputChange('alcohol_details', '')
+                      } else {
+                        handleInputChange('alcohol_consumption', 'light')
                       }
                     }}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Seçiniz..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        <div className="flex items-center gap-2">
-                          <span>✅</span>
-                          <span>Hayır, alkol almadım</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="light">
-                        <div className="flex items-center gap-2">
-                          <span>⚠️</span>
-                          <span>Hafif (1-2 içki)</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="moderate">
-                        <div className="flex items-center gap-2">
-                          <span>⚠️</span>
-                          <span>Orta (3-4 içki)</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="heavy">
-                        <div className="flex items-center gap-2">
-                          <span>🚫</span>
-                          <span>Ağır (5+ içki)</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="severe">
-                        <div className="flex items-center gap-2">
-                          <span>🚫</span>
-                          <span>Çok fazla (sarhoş)</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {formData.alcohol_consumption !== 'none' && (
-                    <div className="mt-3">
-                      <Badge 
-                        variant={formData.alcohol_consumption === 'heavy' || formData.alcohol_consumption === 'severe' ? "destructive" : "secondary"} 
-                        className="text-xs py-1 px-3"
-                      >
-                        ⚠️ Alkollüyken sürüş yapmak yasaktır ve suçtur!
-                      </Badge>
+                    className="w-5 h-5 mt-0.5 rounded border-gray-300 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm text-gray-900 mb-1">
+                      Son 24 saat içinde alkol aldım
                     </div>
-                  )}
-                </div>
+                    <p className="text-xs text-gray-600">
+                      Alkol almadıysanız bu kutucuğu işaretlemeyin
+                    </p>
+                  </div>
+                </Label>
+              </div>
 
-                {formData.alcohol_consumption !== 'none' && (
-                  <div className="pt-3 border-t border-gray-200">
-                    <Label htmlFor="alcohol_details" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Detayları girin (opsiyonel)
+              {/* If checked, show details input */}
+              {formData.alcohol_consumption !== 'none' && (
+                <div className="p-4 rounded-lg border-2 bg-orange-50 border-orange-200 space-y-3">
+                  <div>
+                    <Label htmlFor="alcohol_details" className="text-sm font-medium text-gray-900 mb-2 block">
+                      Ne aldınız? (Detaylı yazın)
                     </Label>
                     <Input
                       id="alcohol_details"
                       type="text"
-                      placeholder="Örnek: 2 kadeh şarap, 1 bira..."
+                      placeholder="Örnek: 2 kadeh şarap, 3 bira, 1 tek rakı..."
                       value={formData.alcohol_details || ''}
                       onChange={(e) => {
                         handleInputChange('alcohol_details', e.target.value)
@@ -303,19 +275,101 @@ export function AccidentPredictionForm() {
                           handleInputChange('alcohol_consumption', detected.level)
                         }
                       }}
-                      className="h-11"
+                      className="h-11 bg-white"
                     />
-                    {formData.alcohol_details && searchAlcoholDatabase(formData.alcohol_details) && (
-                      <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                        💡 Otomatik tespit: {searchAlcoholDatabase(formData.alcohol_details)?.description}
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      💡 Bu bilgiyi girerseniz sistem otomatik olarak seviyeyi belirleyebilir
+                    <p className="text-xs text-gray-600 mt-1.5">
+                      💡 Sistem ne içtiğinizi analiz ederek yasal sınırlara göre uyarı verecektir
                     </p>
                   </div>
-                )}
-              </div>
+
+                  {/* Auto-detection and warnings */}
+                  {formData.alcohol_details && (() => {
+                    const detected = searchAlcoholDatabase(formData.alcohol_details)
+                    if (!detected) return null
+
+                    const promil = estimatePromil(formData.alcohol_details)
+                    const waitTime = getWaitTimeHours(formData.alcohol_details)
+                    const risk = getAlcoholRiskCategory(promil)
+
+                    return (
+                      <div className="space-y-3">
+                        {/* Detection result */}
+                        <div className="p-3 bg-white rounded-lg border border-blue-200">
+                          <div className="text-xs font-semibold text-blue-800 mb-1">
+                            ✓ Otomatik Tespit:
+                          </div>
+                          <div className="text-sm text-gray-900">
+                            {detected.description}
+                          </div>
+                        </div>
+
+                        {/* Promil and legal status */}
+                        <div className={`p-3 rounded-lg border-2 ${
+                          promil >= LEGAL_LIMITS.HUSUSI_ARAC
+                            ? 'bg-red-50 border-red-300'
+                            : promil >= LEGAL_LIMITS.TICARI_ARAC
+                            ? 'bg-yellow-50 border-yellow-300'
+                            : 'bg-blue-50 border-blue-300'
+                        }`}>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-gray-700">Tahmini Promil:</span>
+                              <span className="text-base font-bold text-gray-900">{promil.toFixed(2)}‰</span>
+                            </div>
+
+                            <div className="text-xs space-y-1">
+                              <div className={`flex items-center gap-2 ${detected.is_legal_hususi ? 'text-green-700' : 'text-red-700'}`}>
+                                {detected.is_legal_hususi ? '✓' : '✗'} Hususi araç sınırı ({LEGAL_LIMITS.HUSUSI_ARAC}‰)
+                              </div>
+                              <div className={`flex items-center gap-2 ${detected.is_legal_ticari ? 'text-green-700' : 'text-red-700'}`}>
+                                {detected.is_legal_ticari ? '✓' : '✗'} Ticari araç sınırı ({LEGAL_LIMITS.TICARI_ARAC}‰)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Wait time recommendation */}
+                        {waitTime > 0 && (
+                          <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <div className="flex items-start gap-2">
+                              <Clock className="h-4 w-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="text-xs font-semibold text-indigo-900 mb-1">
+                                  ⏰ Bekleme Tavsiyesi:
+                                </div>
+                                <div className="text-sm text-indigo-800">
+                                  En az <span className="font-bold">{waitTime} saat</span> bekleyin
+                                </div>
+                                <p className="text-xs text-indigo-600 mt-1">
+                                  Vücut ortalama saatte ~{LEGAL_LIMITS.AVERAGE_METABOLISM_RATE}‰ promil düşürür
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Main warning */}
+                        <Alert className={`${
+                          promil >= LEGAL_LIMITS.HUSUSI_ARAC
+                            ? 'bg-red-100 border-red-300'
+                            : promil >= LEGAL_LIMITS.TICARI_ARAC
+                            ? 'bg-yellow-100 border-yellow-300'
+                            : 'bg-blue-100 border-blue-300'
+                        }`}>
+                          <AlertTriangle className={`h-4 w-4 ${
+                            promil >= LEGAL_LIMITS.HUSUSI_ARAC ? 'text-red-600' : 'text-yellow-600'
+                          }`} />
+                          <AlertDescription className={`text-sm font-medium ${
+                            promil >= LEGAL_LIMITS.HUSUSI_ARAC ? 'text-red-800' : 'text-yellow-800'
+                          }`}>
+                            {risk.message}
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
           </div>
 
