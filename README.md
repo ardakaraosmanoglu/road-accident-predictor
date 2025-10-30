@@ -1,4 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Road Accident Risk Predictor
+
+A Next.js web application for predicting road accident risk using real-time weather data, traffic conditions, and route analysis. Built with TypeScript, Tailwind CSS, and integrated with OpenWeatherMap API and Google Maps Directions API.
+
+## Features
+
+- **Real-time Weather Integration**: Automatically fetches current weather data using OpenWeatherMap API
+- **Route Analysis**: Integrates with Google Maps Directions API for real-time traffic and accurate route data
+- **Risk Assessment**: Sophisticated prediction engine that calculates accident risk based on multiple factors
+- **Interactive Form**: User-friendly interface for inputting trip details and viewing risk predictions
+- **Geolocation Support**: Automatically detects current location for weather and route analysis
+
+## Documentation
+
+- [Weather Integration Guide](docs/WEATHER_INTEGRATION.md) - OpenWeatherMap API setup and usage
+- [Google Maps Integration Guide](docs/GOOGLE_MAPS_INTEGRATION.md) - Google Maps Directions API setup and usage
+
+## Configuration
+
+Create a `.env.local` file in the root directory with your API keys:
+
+```env
+NEXT_PUBLIC_OPENWEATHER_API_KEY=your_openweather_api_key
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+### API Requirements
+
+- **OpenWeatherMap**: Required for weather data (free tier available)
+- **Google Maps Directions API**: For route data and real-time traffic analysis (free tier: $200 credit/month)
+
+**Note**: The application will work with mock data if API keys are not configured, making it perfect for development and testing.
 
 ## Getting Started
 
