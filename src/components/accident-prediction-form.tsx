@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,35 @@ import { ProcessedWeatherData } from '@/lib/weather-api'
 import { ProcessedRouteData } from '@/lib/maps-api'
 import { CloudRain, Car, Map, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 
+/**
+ * Get the current time context from the device
+ * Returns hour, day of week, month, and whether it's likely rush hour
+ */
+function getCurrentTimeContext() {
+  const now = new Date()
+  const hour = now.getHours()
+  const dayOfWeek = now.getDay() // 0 = Sunday, 1 = Monday, ...
+  const month = now.getMonth() + 1
+
+  // Convert day number to day name
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const day_of_week = dayNames[dayOfWeek] as 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+  // Detect rush hour: typically 7-9 AM or 5-7 PM on weekdays (Monday-Friday)
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
+  const is_rush_hour = isWeekday && ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 19))
+
+  return {
+    hour_of_day: hour,
+    day_of_week,
+    month,
+    is_rush_hour
+  }
+}
+
 export function AccidentPredictionForm() {
+  const timeContext = getCurrentTimeContext()
+
   const [formData, setFormData] = useState<Partial<AccidentPredictionInput>>({
     weather_condition: 'clear',
     temperature: 20,
@@ -33,11 +61,11 @@ export function AccidentPredictionForm() {
     number_of_lanes: 2,
     speed_limit: 50,
     intersection_type: 'traffic_light',
-    hour_of_day: 12,
-    day_of_week: 'monday',
-    month: new Date().getMonth() + 1,
+    hour_of_day: timeContext.hour_of_day,
+    day_of_week: timeContext.day_of_week,
+    month: timeContext.month,
     is_holiday: false,
-    is_rush_hour: false,
+    is_rush_hour: timeContext.is_rush_hour,
     urban_rural: 'urban',
     school_zone: false,
     construction_zone: false
@@ -45,6 +73,22 @@ export function AccidentPredictionForm() {
 
   const [prediction, setPrediction] = useState<AccidentRiskPrediction | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Update time context every minute to keep it current
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newTimeContext = getCurrentTimeContext()
+      setFormData(prev => ({
+        ...prev,
+        hour_of_day: newTimeContext.hour_of_day,
+        day_of_week: newTimeContext.day_of_week,
+        month: newTimeContext.month,
+        is_rush_hour: newTimeContext.is_rush_hour
+      }))
+    }, 60000) // Update every 60 seconds
+
+    return () => clearInterval(timer)
+  }, [])
 
   const handleInputChange = (field: keyof AccidentPredictionInput, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -368,10 +412,13 @@ export function AccidentPredictionForm() {
       {/* Time & Context */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Time & Context
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Time & Context
+            </CardTitle>
+            <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">Auto-filled from device time</span>
+          </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">

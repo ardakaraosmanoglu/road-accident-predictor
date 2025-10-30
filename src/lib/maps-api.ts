@@ -20,17 +20,106 @@ export interface ProcessedRouteData {
   road_conditions_estimated: 'excellent' | 'good' | 'fair' | 'poor'
 }
 
+// Google Maps API Type Definitions
+interface GoogleMaps {
+  maps: {
+    TravelMode: {
+      DRIVING: string
+      WALKING: string
+      BICYCLING: string
+      TRANSIT: string
+    }
+    TrafficModel: {
+      BEST_GUESS: string
+      OPTIMISTIC: string
+      PESSIMISTIC: string
+    }
+    DirectionsStatus: {
+      OK: string
+      NOT_FOUND: string
+      ZERO_RESULTS: string
+      MAX_WAYPOINTS_EXCEEDED: string
+      INVALID_REQUEST: string
+      OVER_QUERY_LIMIT: string
+      REQUEST_DENIED: string
+      UNKNOWN_ERROR: string
+    }
+    DirectionsService: new () => DirectionsService
+    Geocoder: new () => Geocoder
+  }
+}
+
+interface DirectionsService {
+  route(
+    request: DirectionsRequest,
+    callback: (result: DirectionsResult | null, status: string) => void
+  ): void
+}
+
+interface Geocoder {
+  geocode(
+    request: GeocoderRequest,
+    callback: (results: GeocoderResult[] | null, status: string) => void
+  ): void
+}
+
+interface DirectionsRequest {
+  origin: string
+  destination: string
+  waypoints?: Array<{ location: string }>
+  travelMode: string
+  drivingOptions?: {
+    departureTime: Date
+    trafficModel: string
+  }
+  optimizeWaypoints?: boolean
+}
+
+interface DirectionsResult {
+  routes: DirectionsRoute[]
+}
+
+interface DirectionsRoute {
+  summary?: string
+  legs: DirectionsLeg[]
+}
+
+interface DirectionsLeg {
+  distance?: { value: number; text: string }
+  duration?: { value: number; text: string }
+  duration_in_traffic?: { value: number; text: string }
+  start_address?: string
+  end_address?: string
+  steps?: DirectionsStep[]
+}
+
+interface DirectionsStep {
+  instructions?: string
+}
+
+interface GeocoderRequest {
+  address?: string
+  location?: { lat: number; lng: number }
+}
+
+interface GeocoderResult {
+  formatted_address: string
+  geometry: {
+    location: { lat: () => number; lng: () => number }
+  }
+}
+
 declare global {
   interface Window {
-    google: any
+    google?: GoogleMaps
     initGoogleMaps: () => void
   }
 }
 
 export class MapsService {
   private apiKey: string
-  private directionsService: any = null
-  private geocoder: any = null
+  private directionsService: DirectionsService | null = null
+  private geocoder: Geocoder | null = null
 
   constructor() {
     this.apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
@@ -62,9 +151,11 @@ export class MapsService {
       script.async = true
 
       window.initGoogleMaps = () => {
-        this.directionsService = new window.google.maps.DirectionsService()
-        this.geocoder = new window.google.maps.Geocoder()
-        console.log('✅ Google Maps API loaded successfully')
+        if (window.google?.maps) {
+          this.directionsService = new window.google.maps.DirectionsService()
+          this.geocoder = new window.google.maps.Geocoder()
+          console.log('✅ Google Maps API loaded successfully')
+        }
       }
 
       document.head.appendChild(script)
@@ -132,10 +223,14 @@ export class MapsService {
       const waypointObjects = waypoints?.map(wp => ({ location: wp })) || []
 
       // Create directions request
-      const request = {
+      if (!window.google?.maps) {
+        throw new Error('Google Maps API not loaded')
+      }
+
+      const request: DirectionsRequest = {
         origin: originStr,
         destination: destStr,
-        waypoints: waypointObjects,
+        waypoints: waypointObjects.length > 0 ? waypointObjects : undefined,
         travelMode: window.google.maps.TravelMode.DRIVING,
         drivingOptions: {
           departureTime: new Date(),
@@ -145,9 +240,13 @@ export class MapsService {
       }
 
       // Make the directions request
-      const result = await new Promise((resolve, reject) => {
-        this.directionsService.route(request, (result: any, status: any) => {
-          if (status === window.google.maps.DirectionsStatus.OK) {
+      const result = await new Promise<DirectionsResult>((resolve, reject) => {
+        if (!this.directionsService) {
+          reject(new Error('Directions service not initialized'))
+          return
+        }
+        this.directionsService.route(request, (result: DirectionsResult | null, status: string) => {
+          if (status === window.google?.maps.DirectionsStatus.OK && result) {
             resolve(result)
           } else {
             reject(new Error(`Directions request failed: ${status}`))
@@ -156,7 +255,7 @@ export class MapsService {
       })
 
       console.log('✅ Google Maps Directions API successful')
-      return this.processGoogleMapsDirectionsData(result as any)
+      return this.processGoogleMapsDirectionsData(result)
 
     } catch (error: unknown) {
       const err = error as { message?: string }
@@ -170,7 +269,7 @@ export class MapsService {
     }
   }
 
-  private processGoogleMapsDirectionsData(data: any): ProcessedRouteData {
+  private processGoogleMapsDirectionsData(data: DirectionsResult): ProcessedRouteData {
     const route = data.routes[0]
     const leg = route.legs[0]
 
@@ -213,7 +312,7 @@ export class MapsService {
     }
   }
 
-  private analyzeGoogleMapsRoadTypes(route: any): string[] {
+  private analyzeGoogleMapsRoadTypes(route: DirectionsRoute): string[] {
     const roadTypes = new Set<string>()
 
     // Analyze route summary and legs for road types
@@ -246,7 +345,7 @@ export class MapsService {
     return Array.from(roadTypes).length > 0 ? Array.from(roadTypes) : ['arterial']
   }
 
-  private analyzeUrbanRural(leg: any): ProcessedRouteData['urban_rural'] {
+  private analyzeUrbanRural(leg: DirectionsLeg): ProcessedRouteData['urban_rural'] {
     const startAddress = leg.start_address?.toLowerCase() || ''
     const endAddress = leg.end_address?.toLowerCase() || ''
     const allText = `${startAddress} ${endAddress}`
@@ -263,7 +362,7 @@ export class MapsService {
     return 'suburban'
   }
 
-  private extractMajorRoads(leg: any): string[] {
+  private extractMajorRoads(leg: DirectionsLeg): string[] {
     const roads: string[] = []
 
     leg.steps?.forEach(step => {
