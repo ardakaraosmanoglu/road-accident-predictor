@@ -4,15 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Road Accident Risk Predictor** - A Next.js web application that analyzes road conditions and predicts accident risk using real-time weather data, traffic conditions, and route information. The application provides risk scores, contributing factors, and safety recommendations based on multiple risk dimensions.
+**Road Accident Risk Predictor** - A Next.js web application that analyzes road conditions and predicts accident risk using real-time weather data and manual traffic/road inputs. The application provides risk scores, contributing factors, and safety recommendations based on multiple risk dimensions.
 
 ### Core Features
 
 1. **Sophisticated Risk Prediction Engine** - Client-side calculation using weighted factors across weather, traffic, road conditions, time, and location
 2. **Real-Time Weather Integration** - OpenWeatherMap API with fallback to manual input
-3. **Real-Time Traffic & Route Analysis** - Google Maps Directions API with traffic data
-4. **Visual Risk Assessment** - Risk meter display, confidence scoring, and contributing factors
-5. **Safety Recommendations** - Context-aware recommendations based on identified risk factors
+3. **Visual Risk Assessment** - Risk meter display, confidence scoring, and contributing factors
+4. **Safety Recommendations** - Context-aware recommendations based on identified risk factors
 
 ## Technology Stack
 
@@ -23,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Styling**: TailwindCSS 4.0 with PostCSS
 - **UI Components**: Radix UI + shadcn/ui pattern (custom Card, Button, Input, Label, Select, Badge, Alert, Progress)
 - **Icons**: Lucide React
-- **API Clients**: Axios, @googlemaps/google-maps-services-js
+- **API Clients**: Axios
 - **Linting**: ESLint 9
 
 ## Getting Started
@@ -34,9 +33,8 @@ npm install
 
 # Set environment variables
 cp .env.local.example .env.local
-# Add your API keys:
+# Add your API key:
 # NEXT_PUBLIC_OPENWEATHER_API_KEY
-# NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 # Start development server with Turbopack
 npm run dev
@@ -66,7 +64,6 @@ src/
 ├── components/
 │   ├── accident-prediction-form.tsx    # Main prediction interface
 │   ├── weather-fetcher.tsx            # Real-time weather integration
-│   ├── route-fetcher.tsx              # Real-time traffic/route integration
 │   ├── risk-meter.tsx                 # Visual risk display
 │   ├── ui/                            # Radix UI + shadcn components
 │   └── [other components]/
@@ -74,7 +71,6 @@ src/
 ├── lib/
 │   ├── prediction-engine.ts       # Core risk calculation engine
 │   ├── weather-api.ts            # OpenWeatherMap integration
-│   ├── maps-api.ts               # Google Maps Directions API integration
 │   ├── utils.ts                  # Utility functions
 │   └── [auth, storage, hooks]/   # Supporting libraries
 │
@@ -101,21 +97,16 @@ src/
   - Converts raw API responses to `ProcessedWeatherData`
   - Maps conditions: clear, rain, snow, fog, cloudy, storm
 
-- **`src/lib/maps-api.ts`** - Google Maps Directions API integration
-  - Extracts traffic density, average speed, road types
-  - Returns `ProcessedRouteData` with estimated vehicle count and conditions
-
 ### UI Components
 
 - **`src/components/accident-prediction-form.tsx`** - Main form (21+ input fields)
   - Weather inputs (manual + real-time fetcher)
-  - Traffic inputs (manual + route fetcher)
+  - Traffic inputs (manual entry)
   - Road layout inputs (type, condition, lanes, speed limit, intersection type)
   - Time/context inputs (hour, day, month, special conditions)
   - Displays prediction results with risk meter and recommendations
 
 - **`src/components/weather-fetcher.tsx`** - Real-time weather button
-- **`src/components/route-fetcher.tsx`** - Route analysis button
 - **`src/components/risk-meter.tsx`** - Visual risk gauge display
 
 ### Type Definitions
@@ -148,10 +139,9 @@ Risk levels: `low`, `moderate`, `high`, `critical`
 
 ```
 NEXT_PUBLIC_OPENWEATHER_API_KEY=your_key    # OpenWeatherMap API
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key    # Google Maps Directions API
 ```
 
-**Note**: The app gracefully degrades with mock data if keys are not configured.
+**Note**: The app gracefully degrades with mock data if the API key is not configured.
 
 ## Development Commands
 
@@ -206,7 +196,6 @@ const input: AccidentPredictionInput = {
 const prediction = predictAccidentRisk(input)
 // Returns: { risk_level, risk_score (0-100), confidence (0-100), contributing_factors[], recommendations[] }
 ```
-
 ### Real-Time Data Integration
 
 ```typescript
@@ -221,18 +210,6 @@ const handleWeatherData = (weatherData: ProcessedWeatherData) => {
     wind_speed: weatherData.wind_speed
   }))
 }
-
-// Route Fetcher automatically updates road/traffic fields
-const handleRouteData = (routeData: ProcessedRouteData) => {
-  setFormData(prev => ({
-    ...prev,
-    traffic_density: routeData.traffic_density,
-    average_speed: routeData.average_speed_kmh,
-    vehicle_count: routeData.estimated_vehicle_count,
-    road_type: routeData.road_types[0],
-    urban_rural: routeData.urban_rural,
-  }))
-}
 ```
 
 ## Component Structure
@@ -243,19 +220,19 @@ const handleRouteData = (routeData: ProcessedRouteData) => {
 - Handles layout with gradient background
 
 ### AccidentPredictionForm (accident-prediction-form.tsx)
-- Manages form state with 21 input fields
-- 4 main card sections: Weather, Traffic, Road Layout, Time & Context
-- Real-time data fetchers for weather and routes
+- Manages form state with 21+ input fields
+- 5 main card sections: Driver & Vehicle Safety, Weather, Traffic, Road Layout, Time & Context
+- Real-time weather data fetcher
 - Prediction button with loading state
 - Results display with risk meter, contributing factors, and recommendations
 
 ## Key Considerations
 
-1. **API Keys Required for Full Functionality**: Weather and route fetchers need valid API keys. App works with mock data in development.
+1. **API Key for Weather Data**: Weather fetcher requires OpenWeatherMap API key. App works with mock data in development.
 
 2. **Client-Side Prediction**: Risk calculation happens entirely on the client (no server API calls for predictions).
 
-3. **Real-Time Integration**: Weather and route data are fetched on-demand via buttons, not automatically.
+3. **Real-Time Weather Integration**: Weather data is fetched on-demand via button, not automatically.
 
 4. **Confidence Scoring**: Based on number of risk factors and certainty of calculations, not just the risk score.
 
@@ -292,3 +269,4 @@ npm start
 ```
 
 Vercel is recommended for deployment (seamless Next.js integration).
+

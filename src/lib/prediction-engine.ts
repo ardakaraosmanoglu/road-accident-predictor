@@ -30,6 +30,10 @@ export function predictAccidentRisk(input: AccidentPredictionInput): AccidentRis
   const locationRisk = calculateLocationRisk(input)
   if (locationRisk.score > 0) riskFactors.push(locationRisk)
 
+  // Driver & Vehicle risk scoring (MOST IMPORTANT - highest weight)
+  const driverVehicleRisk = calculateDriverVehicleRisk(input)
+  if (driverVehicleRisk.score > 0) riskFactors.push(driverVehicleRisk)
+
   // Calculate weighted total score
   const totalScore = riskFactors.reduce((sum, factor) => sum + (factor.score * factor.weight), 0)
   const maxPossibleScore = riskFactors.reduce((sum, factor) => sum + (100 * factor.weight), 0)
@@ -124,10 +128,10 @@ function calculateWeatherRisk(input: AccidentPredictionInput): RiskFactor {
   }
 
   return {
-    name: 'Weather conditions',
-    weight: 0.3,
+    name: 'Hava koşulları',
+    weight: 0.25,
     score: Math.min(100, score),
-    reason: reason || 'Good weather conditions'
+    reason: reason || 'İyi hava koşulları'
   }
 }
 
@@ -179,10 +183,10 @@ function calculateTrafficRisk(input: AccidentPredictionInput): RiskFactor {
   }
 
   return {
-    name: 'Traffic conditions',
-    weight: 0.25,
+    name: 'Trafik koşulları',
+    weight: 0.15,
     score: Math.min(100, score),
-    reason: reason || 'Normal traffic conditions'
+    reason: reason || 'Normal trafik koşulları'
   }
 }
 
@@ -260,10 +264,10 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
   }
 
   return {
-    name: 'Road layout',
-    weight: 0.2,
+    name: 'Yol düzeni',
+    weight: 0.10,
     score: Math.min(100, score),
-    reason: reason || 'Good road conditions'
+    reason: reason || 'İyi yol koşulları'
   }
 }
 
@@ -308,10 +312,10 @@ function calculateTimeRisk(input: AccidentPredictionInput): RiskFactor {
   }
 
   return {
-    name: 'Time factors',
-    weight: 0.15,
+    name: 'Zaman faktörleri',
+    weight: 0.10,
     score: Math.min(100, score),
-    reason: reason || 'Normal time conditions'
+    reason: reason || 'Normal zaman koşulları'
   }
 }
 
@@ -346,10 +350,94 @@ function calculateLocationRisk(input: AccidentPredictionInput): RiskFactor {
   }
 
   return {
-    name: 'Location factors',
-    weight: 0.1,
+    name: 'Konum faktörleri',
+    weight: 0.05,
     score: Math.min(100, score),
-    reason: reason || 'Normal location conditions'
+    reason: reason || 'Normal konum koşulları'
+  }
+}
+
+function calculateDriverVehicleRisk(input: AccidentPredictionInput): RiskFactor {
+  let score = 0
+  let reason = ''
+
+  // ALCOHOL CONSUMPTION - Most critical factor!
+  switch (input.alcohol_consumption) {
+    case 'none':
+      score += 0
+      break
+    case 'light':
+      score += 40
+      reason = '🍺 Alcohol consumption detected (light)'
+      break
+    case 'moderate':
+      score += 70
+      reason = '🍺 Moderate alcohol consumption - UNSAFE TO DRIVE'
+      break
+    case 'heavy':
+      score += 90
+      reason = '🍺 Heavy alcohol consumption - CRITICAL DANGER'
+      break
+    case 'severe':
+      score += 100
+      reason = '🍺 Severe intoxication - EXTREME DANGER'
+      break
+  }
+
+  // DRIVER FATIGUE
+  switch (input.driver_fatigue) {
+    case 'fresh':
+      score += 0
+      break
+    case 'normal':
+      score += 10
+      reason += reason ? ', normal tiredness' : 'Normal tiredness'
+      break
+    case 'tired':
+      score += 35
+      reason += reason ? ', driver is tired' : '😴 Driver is tired'
+      break
+    case 'very_tired':
+      score += 60
+      reason += reason ? ', driver is very tired' : '😴 Driver is very tired - HIGH RISK'
+      break
+  }
+
+  // DRIVER EXPERIENCE
+  switch (input.driver_experience) {
+    case 'professional':
+      score += 0
+      break
+    case 'experienced':
+      score += 5
+      break
+    case 'intermediate':
+      score += 15
+      reason += reason ? ', intermediate driver' : 'Intermediate driver experience'
+      break
+    case 'beginner':
+      score += 30
+      reason += reason ? ', beginner driver' : '🔰 Beginner driver - less experience'
+      break
+  }
+
+  // SEATBELT USAGE - Critical safety factor
+  if (!input.seatbelt_usage) {
+    score += 50
+    reason += reason ? ', NO SEATBELT' : '⚠️ NO SEATBELT - Critical safety risk!'
+  }
+
+  // VEHICLE MAINTENANCE
+  if (!input.vehicle_maintenance_check) {
+    score += 25
+    reason += reason ? ', vehicle not checked' : '🔧 Vehicle maintenance not performed'
+  }
+
+  return {
+    name: 'Sürücü ve Araç Güvenliği',
+    weight: 0.35, // HIGHEST WEIGHT - driver factors are primary cause of accidents
+    score: Math.min(100, score),
+    reason: reason || 'İyi sürücü ve araç koşulları'
   }
 }
 
@@ -364,60 +452,93 @@ function getRiskLevel(score: number): AccidentRiskPrediction['risk_level'] {
 function generateRecommendations(input: AccidentPredictionInput, riskFactors: RiskFactor[]): string[] {
   const recommendations: string[] = []
 
+  // DRIVER & VEHICLE SAFETY - HIGHEST PRIORITY RECOMMENDATIONS
+  if (input.alcohol_consumption !== 'none') {
+    if (input.alcohol_consumption === 'severe' || input.alcohol_consumption === 'heavy') {
+      recommendations.push('🚨 ASLA ARABA KULLANMAYIN! Ağır derecede alkollüsünüz. Taksi çağırın veya toplu taşıma kullanın')
+      recommendations.push('⚠️ Alkollü araç kullanmak yasaktır ve son derece tehlikelidir')
+    } else if (input.alcohol_consumption === 'moderate') {
+      recommendations.push('🚨 ASLA ARABA KULLANMAYIN! Kan alkol seviyeniz yasal sınırı aşıyor')
+      recommendations.push('Alternatif ulaşım yöntemleri kullanın - taksi, araç paylaşımı veya toplu taşıma')
+    } else {
+      recommendations.push('⚠️ Alkol tespit edildi - Aşırı dikkatli olun veya araç kullanmayın')
+    }
+  }
+
+  if (!input.seatbelt_usage) {
+    recommendations.push('🔴 HEMEN EMNİYET KEMERİNİZİ TAKIN! Bu güvenliğiniz için kritik öneme sahip')
+  }
+
+  if (input.driver_fatigue === 'very_tired' || input.driver_fatigue === 'tired') {
+    recommendations.push('😴 Güvenli sürüş için çok yorgunsunuz. Mola verin veya yolculuğunuzu erteleyin')
+    if (input.driver_fatigue === 'very_tired') {
+      recommendations.push('İyice dinlenene kadar hiç araç kullanmamayı düşünün')
+    }
+  }
+
+  if (!input.vehicle_maintenance_check) {
+    recommendations.push('🔧 Sürüş öncesi temel araç kontrolleri yapın (lastikler, farlar, frenler)')
+  }
+
+  if (input.driver_experience === 'beginner') {
+    recommendations.push('🔰 Yeni sürücü olarak, mümkünse yüksek riskli koşullardan kaçının')
+    recommendations.push('Daha az trafikli ve gündüz saatlerinde sürüş yapmayı düşünün')
+  }
+
   // Weather-based recommendations
   if (input.weather_condition === 'rain' || input.weather_condition === 'snow') {
-    recommendations.push('Reduce speed and increase following distance')
-    recommendations.push('Use headlights and turn on hazard lights if necessary')
+    recommendations.push('Hızınızı düşürün ve takip mesafesini artırın')
+    recommendations.push('Farları kullanın ve gerektiğinde dörtlü ikaz lambalarını açın')
   }
 
   if (input.weather_condition === 'fog') {
-    recommendations.push('Use low-beam headlights and fog lights')
-    recommendations.push('Follow lane markers and road signs carefully')
+    recommendations.push('Kısa hüzmeli farlar ve sis farlarını kullanın')
+    recommendations.push('Şerit çizgilerini ve yol işaretlerini dikkatlice takip edin')
   }
 
   // Traffic-based recommendations
   if (input.traffic_density === 'high' || input.traffic_density === 'very_high') {
-    recommendations.push('Maintain safe following distance')
-    recommendations.push('Stay alert for sudden stops and lane changes')
+    recommendations.push('Güvenli takip mesafesini koruyun')
+    recommendations.push('Ani durmalar ve şerit değişikliklerine karşı tetikte olun')
   }
 
   // Speed-based recommendations
   const speedDifference = Math.abs(input.average_speed - input.speed_limit)
   if (speedDifference > 10) {
-    recommendations.push('Adjust speed to match traffic flow and speed limits')
+    recommendations.push('Hızınızı trafik akışına ve hız limitlerine uygun hale getirin')
   }
 
   // Time-based recommendations
   if (input.hour_of_day >= 22 || input.hour_of_day <= 5) {
-    recommendations.push('Increase alertness for nighttime driving conditions')
-    recommendations.push('Ensure headlights are clean and properly aimed')
+    recommendations.push('Gece sürüş koşulları için dikkatinizi artırın')
+    recommendations.push('Farların temiz ve doğru ayarlanmış olduğundan emin olun')
   }
 
   if (input.is_rush_hour) {
-    recommendations.push('Plan for longer travel times and increased congestion')
+    recommendations.push('Daha uzun seyahat süreleri ve artan trafik yoğunluğu için plan yapın')
   }
 
   // Location-based recommendations
   if (input.school_zone) {
-    recommendations.push('Watch for pedestrians and reduced speed limits')
+    recommendations.push('Yayalara ve azaltılmış hız limitlerine dikkat edin')
   }
 
   if (input.construction_zone) {
-    recommendations.push('Follow posted signs and temporary traffic patterns')
-    recommendations.push('Reduce speed and stay alert for workers and equipment')
+    recommendations.push('Yol işaretlerini ve geçici trafik düzenlemelerini takip edin')
+    recommendations.push('Hızınızı düşürün ve işçiler ve ekipmanlara karşı tetikte olun')
   }
 
   // General high-risk recommendations
   const highRiskFactors = riskFactors.filter(factor => factor.score > 50)
   if (highRiskFactors.length > 1) {
-    recommendations.push('Consider delaying travel or using alternative routes')
-    recommendations.push('Ensure vehicle is in good condition before driving')
+    recommendations.push('Seyahati ertelemeyi veya alternatif rotalar kullanmayı düşünün')
+    recommendations.push('Sürüş öncesi aracın iyi durumda olduğundan emin olun')
   }
 
   // Default recommendations if none specific
   if (recommendations.length === 0) {
-    recommendations.push('Maintain normal safe driving practices')
-    recommendations.push('Stay alert and follow traffic rules')
+    recommendations.push('Normal güvenli sürüş uygulamalarını sürdürün')
+    recommendations.push('Tetikte olun ve trafik kurallarına uyun')
   }
 
   return recommendations.slice(0, 5) // Limit to 5 recommendations

@@ -32,6 +32,14 @@ export interface AccidentPredictionInput {
   urban_rural: 'urban' | 'suburban' | 'rural'
   school_zone: boolean
   construction_zone: boolean
+
+  // Driver & Vehicle conditions
+  alcohol_consumption: 'none' | 'light' | 'moderate' | 'heavy' | 'severe'
+  alcohol_details?: string // Optional: e.g., "2 kadeh viski"
+  driver_fatigue: 'fresh' | 'normal' | 'tired' | 'very_tired'
+  driver_experience: 'beginner' | 'intermediate' | 'experienced' | 'professional'
+  seatbelt_usage: boolean
+  vehicle_maintenance_check: boolean
 }
 
 export interface AccidentRiskPrediction {
