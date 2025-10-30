@@ -14,7 +14,7 @@ import { predictAccidentRisk } from '@/lib/prediction-engine'
 import { RiskMeter } from '@/components/risk-meter'
 import { WeatherFetcher } from '@/components/weather-fetcher'
 import { ProcessedWeatherData } from '@/lib/weather-api'
-import { CloudRain, Car, Map, Clock, AlertTriangle, CheckCircle, RefreshCw, UserCheck, Activity } from 'lucide-react'
+import { CloudRain, Car, Map, Clock, AlertTriangle, CheckCircle, RefreshCw, UserCheck, Activity, Navigation } from 'lucide-react'
 import {
   searchAlcoholDatabase,
   estimatePromil,
@@ -22,6 +22,8 @@ import {
   getAlcoholRiskCategory,
   LEGAL_LIMITS
 } from '@/lib/alcohol-database'
+import { RouteInputMap } from '@/components/route-input-map'
+import type { RouteAnalysisResult } from '@/types/maps'
 
 /**
  * Get the current time context from the device
@@ -85,6 +87,7 @@ export function AccidentPredictionForm() {
 
   const [prediction, setPrediction] = useState<AccidentRiskPrediction | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
 
   // Update time context every minute to keep it current
   useEffect(() => {
@@ -117,6 +120,39 @@ export function AccidentPredictionForm() {
     }))
   }
 
+  const handleRouteData = (routeData: RouteAnalysisResult) => {
+    // Update form data with route analysis results
+    setFormData(prev => ({
+      ...prev,
+      traffic_density: routeData.traffic_density,
+      average_speed: routeData.average_speed,
+      vehicle_count: routeData.vehicle_count,
+      road_type: routeData.road_type,
+      road_condition: routeData.road_condition,
+      number_of_lanes: routeData.number_of_lanes,
+      speed_limit: routeData.speed_limit,
+      intersection_type: routeData.intersection_type,
+      urban_rural: routeData.urban_rural,
+      school_zone: routeData.school_zone,
+      construction_zone: routeData.construction_zone
+    }))
+
+    // Track which fields were auto-filled
+    setAutoFilledFields(new Set([
+      'traffic_density',
+      'average_speed',
+      'vehicle_count',
+      'road_type',
+      'road_condition',
+      'number_of_lanes',
+      'speed_limit',
+      'intersection_type',
+      'urban_rural',
+      'school_zone',
+      'construction_zone'
+    ]))
+  }
+
   const handlePredict = async () => {
     setIsLoading(true)
 
@@ -132,6 +168,45 @@ export function AccidentPredictionForm() {
 
   return (
     <div className="space-y-5 sm:space-y-6 animate-slide-up">
+      {/* Route Information & Map - AUTO-FILL SECTION */}
+      <Card className="border-0 shadow-sm hover-lift bg-gradient-to-br from-blue-50 to-indigo-50 backdrop-blur-sm">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="flex items-center gap-2.5 text-lg sm:text-xl">
+              <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+                <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+              <span>Rota Bilgileri</span>
+              <Badge className="ml-2 bg-gradient-to-r from-green-500 to-blue-500 text-white">
+                🤖 Otomatik Doldurma
+              </Badge>
+            </CardTitle>
+            <p className="text-xs text-gray-600 bg-white px-3 py-1.5 rounded-full">
+              💡 12 parametre otomatik çekilecek
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm text-blue-800">
+              Başlangıç ve varış noktanızı seçin. Sistem rota üzerindeki trafik, yol durumu ve konum bilgilerini otomatik olarak çekecek ve formu dolduracaktır.
+            </AlertDescription>
+          </Alert>
+
+          <RouteInputMap onRouteData={handleRouteData} />
+
+          {autoFilledFields.size > 0 && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-sm text-green-800">
+                ✓ <strong>{autoFilledFields.size} parametre</strong> otomatik dolduruldu! Aşağıdaki form alanlarında mavi kenarlıkla işaretlenmiştir. İsterseniz manuel olarak değiştirebilirsiniz.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Driver & Vehicle Safety - MOST IMPORTANT SECTION */}
       <Card className={`border-0 shadow-sm hover-lift bg-white/80 backdrop-blur-sm ${(formData.alcohol_consumption === 'heavy' || formData.alcohol_consumption === 'severe') ? 'border-2 border-red-300 bg-red-50/30' : ''}`}>
         <CardHeader className="pb-4">
@@ -538,6 +613,9 @@ export function AccidentPredictionForm() {
               <Car className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <span>Trafik Koşulları</span>
+            {(autoFilledFields.has('traffic_density') || autoFilledFields.has('average_speed') || autoFilledFields.has('vehicle_count')) && (
+              <Badge className="ml-2 bg-blue-500 text-white text-xs">🤖 Otomatik</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -545,9 +623,12 @@ export function AccidentPredictionForm() {
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="traffic_density" className="text-sm font-medium text-gray-700">Trafik Yoğunluğu</Label>
+                <Label htmlFor="traffic_density" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                  Trafik Yoğunluğu
+                  {autoFilledFields.has('traffic_density') && <span className="text-xs text-blue-600">🤖</span>}
+                </Label>
             <Select value={formData.traffic_density} onValueChange={(value) => handleInputChange('traffic_density', value)}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={`h-10 ${autoFilledFields.has('traffic_density') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -560,24 +641,30 @@ export function AccidentPredictionForm() {
           </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="average_speed" className="text-sm font-medium text-gray-700">Ortalama Hız (km/h)</Label>
+                <Label htmlFor="average_speed" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                  Ortalama Hız (km/h)
+                  {autoFilledFields.has('average_speed') && <span className="text-xs text-blue-600">🤖</span>}
+                </Label>
             <Input
               id="average_speed"
               type="number"
               value={formData.average_speed}
               onChange={(e) => handleInputChange('average_speed', Number(e.target.value))}
-                  className="h-10"
+                  className={`h-10 ${autoFilledFields.has('average_speed') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}
             />
           </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="vehicle_count" className="text-sm font-medium text-gray-700">Araç Sayısı (saatlik)</Label>
+                <Label htmlFor="vehicle_count" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                  Araç Sayısı (saatlik)
+                  {autoFilledFields.has('vehicle_count') && <span className="text-xs text-blue-600">🤖</span>}
+                </Label>
             <Input
               id="vehicle_count"
               type="number"
               value={formData.vehicle_count}
               onChange={(e) => handleInputChange('vehicle_count', Number(e.target.value))}
-                  className="h-10"
+                  className={`h-10 ${autoFilledFields.has('vehicle_count') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}
             />
           </div>
             </div>
@@ -593,13 +680,20 @@ export function AccidentPredictionForm() {
               <Map className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <span>Yol Düzeni</span>
+            {(autoFilledFields.has('road_type') || autoFilledFields.has('road_condition') || autoFilledFields.has('number_of_lanes') ||
+              autoFilledFields.has('speed_limit') || autoFilledFields.has('intersection_type') || autoFilledFields.has('urban_rural')) && (
+              <Badge className="ml-2 bg-blue-500 text-white text-xs">🤖 Otomatik</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="road_type" className="text-sm font-medium text-gray-700">Yol Tipi</Label>
+            <Label htmlFor="road_type" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Yol Tipi
+              {autoFilledFields.has('road_type') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Select value={formData.road_type} onValueChange={(value) => handleInputChange('road_type', value)}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className={`h-10 ${autoFilledFields.has('road_type') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -613,9 +707,12 @@ export function AccidentPredictionForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="road_condition" className="text-sm font-medium text-gray-700">Yol Durumu</Label>
+            <Label htmlFor="road_condition" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Yol Durumu
+              {autoFilledFields.has('road_condition') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Select value={formData.road_condition} onValueChange={(value) => handleInputChange('road_condition', value)}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className={`h-10 ${autoFilledFields.has('road_condition') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -628,32 +725,41 @@ export function AccidentPredictionForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="number_of_lanes" className="text-sm font-medium text-gray-700">Şerit Sayısı</Label>
+            <Label htmlFor="number_of_lanes" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Şerit Sayısı
+              {autoFilledFields.has('number_of_lanes') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Input
               id="number_of_lanes"
               type="number"
               min="1"
               value={formData.number_of_lanes}
               onChange={(e) => handleInputChange('number_of_lanes', Number(e.target.value))}
-              className="h-10"
+              className={`h-10 ${autoFilledFields.has('number_of_lanes') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="speed_limit" className="text-sm font-medium text-gray-700">Hız Limiti (km/h)</Label>
+            <Label htmlFor="speed_limit" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Hız Limiti (km/h)
+              {autoFilledFields.has('speed_limit') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Input
               id="speed_limit"
               type="number"
               value={formData.speed_limit}
               onChange={(e) => handleInputChange('speed_limit', Number(e.target.value))}
-              className="h-10"
+              className={`h-10 ${autoFilledFields.has('speed_limit') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="intersection_type" className="text-sm font-medium text-gray-700">Kavşak Tipi</Label>
+            <Label htmlFor="intersection_type" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Kavşak Tipi
+              {autoFilledFields.has('intersection_type') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Select value={formData.intersection_type} onValueChange={(value) => handleInputChange('intersection_type', value)}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className={`h-10 ${autoFilledFields.has('intersection_type') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -667,9 +773,12 @@ export function AccidentPredictionForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="urban_rural" className="text-sm font-medium text-gray-700">Bölge Tipi</Label>
+            <Label htmlFor="urban_rural" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Bölge Tipi
+              {autoFilledFields.has('urban_rural') && <span className="text-xs text-blue-600">🤖</span>}
+            </Label>
             <Select value={formData.urban_rural} onValueChange={(value) => handleInputChange('urban_rural', value)}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className={`h-10 ${autoFilledFields.has('urban_rural') ? 'border-2 border-blue-400 bg-blue-50' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -743,7 +852,12 @@ export function AccidentPredictionForm() {
           </div>
 
           <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
-            <Label className="text-sm font-medium text-gray-700">Özel Durumlar</Label>
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              Özel Durumlar
+              {(autoFilledFields.has('school_zone') || autoFilledFields.has('construction_zone')) && (
+                <span className="text-xs text-blue-600">🤖</span>
+              )}
+            </Label>
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant={formData.is_holiday ? "default" : "outline"}
@@ -761,17 +875,21 @@ export function AccidentPredictionForm() {
               </Badge>
               <Badge
                 variant={formData.school_zone ? "default" : "outline"}
-                className="cursor-pointer transition-all hover:scale-105 px-3 py-1.5"
+                className={`cursor-pointer transition-all hover:scale-105 px-3 py-1.5 ${
+                  autoFilledFields.has('school_zone') ? 'ring-2 ring-blue-400' : ''
+                }`}
                 onClick={() => handleInputChange('school_zone', !formData.school_zone)}
               >
-                🏫 Okul Bölgesi
+                🏫 Okul Bölgesi {autoFilledFields.has('school_zone') && '🤖'}
               </Badge>
               <Badge
                 variant={formData.construction_zone ? "default" : "outline"}
-                className="cursor-pointer transition-all hover:scale-105 px-3 py-1.5"
+                className={`cursor-pointer transition-all hover:scale-105 px-3 py-1.5 ${
+                  autoFilledFields.has('construction_zone') ? 'ring-2 ring-blue-400' : ''
+                }`}
                 onClick={() => handleInputChange('construction_zone', !formData.construction_zone)}
               >
-                🚧 İnşaat Bölgesi
+                🚧 İnşaat Bölgesi {autoFilledFields.has('construction_zone') && '🤖'}
               </Badge>
             </div>
           </div>
