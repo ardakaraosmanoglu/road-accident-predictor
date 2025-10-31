@@ -138,6 +138,21 @@ export async function fetchRoadInfo(path: string, interpolate = false) {
 }
 
 /**
+ * Estimate speed limit based on road type (fallback when Roads API is unavailable)
+ * Uses typical Turkish road speed limits
+ */
+function estimateSpeedLimitFromRoadType(roadType: RouteAnalysisResult['road_type']): number {
+  switch (roadType) {
+    case 'highway': return 120 // Otoyol - Turkish highway speed limit
+    case 'arterial': return 80  // Cadde/Bulvar - Major urban roads
+    case 'collector': return 50 // Toplayıcı yol - Collector roads
+    case 'local': return 40     // Sokak - Local streets
+    case 'rural': return 90     // Kırsal yol - Rural roads
+    default: return 50
+  }
+}
+
+/**
  * Main function: Analyze a route and return form data
  * This combines multiple API calls to gather all necessary information
  */
@@ -237,8 +252,16 @@ export async function analyzeRouteForForm(
       }
     }
 
-    // Step 9: Try to fetch speed limit from Roads API (optional, may fail)
-    let speed_limit = 50 // Default fallback
+    // Step 9: Determine speed limit
+    // Start with intelligent estimate based on road type (always have a reasonable value)
+    let speed_limit = estimateSpeedLimitFromRoadType(road_type)
+    let speedLimitSource: 'estimated' | 'roads_api' = 'estimated'
+
+    // Try to get real speed limit from Google Roads API (if enabled in Google Cloud)
+    // NOTE: To use Roads API, you need to:
+    // 1. Enable "Roads API" in Google Cloud Console
+    // 2. Ensure billing is set up (first $200/month free)
+    // 3. Roads API provides exact speed limits for specific road segments
     try {
       // Create path from route steps (sample 5 points along the route)
       const points = leg.steps
@@ -249,16 +272,21 @@ export async function analyzeRouteForForm(
       if (points) {
         const roadsData = await fetchRoadInfo(points, true)
         if (roadsData.speedLimits && roadsData.speedLimits.length > 0) {
-          // Average the speed limits
+          // Average the speed limits along the route
           const avgSpeedLimit = roadsData.speedLimits.reduce(
             (sum: number, limit: { speedLimit: number }) => sum + limit.speedLimit,
             0
           ) / roadsData.speedLimits.length
           speed_limit = Math.round(avgSpeedLimit)
+          speedLimitSource = 'roads_api'
+          console.log(`✅ Speed limit from Roads API: ${speed_limit} km/h`)
+        } else {
+          console.log(`⚠️ Roads API returned no speed limits, using estimated: ${speed_limit} km/h (${road_type})`)
         }
       }
     } catch (error) {
-      console.warn('Failed to fetch speed limit, using default:', error)
+      console.warn(`⚠️ Roads API failed (using estimated ${speed_limit} km/h for ${road_type}):`, error instanceof Error ? error.message : error)
+      // Keep the estimated speed_limit - no change needed
     }
 
     // Step 10: Estimate number of lanes based on road type
