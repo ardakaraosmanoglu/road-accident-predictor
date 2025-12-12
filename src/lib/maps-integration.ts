@@ -255,7 +255,6 @@ export async function analyzeRouteForForm(
     // Step 9: Determine speed limit
     // Start with intelligent estimate based on road type (always have a reasonable value)
     let speed_limit = estimateSpeedLimitFromRoadType(road_type)
-    let speedLimitSource: 'estimated' | 'roads_api' = 'estimated'
 
     // Try to get real speed limit from Google Roads API (if enabled in Google Cloud)
     // NOTE: To use Roads API, you need to:
@@ -278,7 +277,6 @@ export async function analyzeRouteForForm(
             0
           ) / roadsData.speedLimits.length
           speed_limit = Math.round(avgSpeedLimit)
-          speedLimitSource = 'roads_api'
           console.log(`✅ Speed limit from Roads API: ${speed_limit} km/h`)
         } else {
           console.log(`⚠️ Roads API returned no speed limits, using estimated: ${speed_limit} km/h (${road_type})`)
