@@ -96,11 +96,13 @@ export function PredictionWizard() {
       vehicle_maintenance_check: safetyData?.vehicle_maintenance_check ?? true
     }
 
+    // Fake loading delay: 5-20 seconds
+    const fakeDelay = Math.random() * 15000 + 5000
     setTimeout(() => {
       const result = predictAccidentRisk(input)
       setPrediction(result)
       setIsCalculating(false)
-    }, 2000)
+    }, fakeDelay)
   }
 
   const handleReset = () => {
@@ -157,7 +159,7 @@ export function PredictionWizard() {
 
   if (showResults) {
     return (
-      <div className="step-card animate-spring">
+      <div className={`step-card animate-spring ${!isCalculating ? 'results-card' : ''}`}>
         {/* Calculating state */}
         {isCalculating && (
           <div className="flex flex-col items-center justify-center text-center px-6 py-12 space-y-8">
@@ -218,23 +220,25 @@ export function PredictionWizard() {
               </div>
             </div>
 
-            {/* Contributing Factors */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                Risk Faktörleri
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {prediction.contributing_factors.map((factor, index) => (
-                  <span 
-                    key={index} 
-                    className="px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-sm font-medium"
-                  >
-                    {factor}
-                  </span>
-                ))}
+            {/* Contributing Factors - Açıklamalı Uyarılar */}
+            {prediction.contributing_factors.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  Dikkat Edilmesi Gerekenler
+                </h3>
+                <div className="space-y-2">
+                  {prediction.contributing_factors.map((warning, index) => (
+                    <div 
+                      key={index} 
+                      className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100"
+                    >
+                      <p className="text-sm text-gray-700">{warning}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Recommendations */}
             <div className="space-y-3">

@@ -196,7 +196,7 @@ export async function analyzeRouteForForm(
     // Step 3: Calculate average speed (km/h)
     const distanceKm = leg.distance.value / 1000
     const durationHours = trafficDuration / 3600
-    const average_speed = Math.round(distanceKm / durationHours)
+    let average_speed = Math.round(distanceKm / durationHours)
 
     // Step 4: Estimate vehicle count based on traffic density
     let vehicle_count: number
@@ -207,20 +207,53 @@ export async function analyzeRouteForForm(
       case 'very_high': vehicle_count = 500; break
     }
 
-    // Step 5: Determine road type from route summary
+    // Step 5: Determine road type from route summary + distance + speed
     const summary = route.summary.toLowerCase()
     let road_type: RouteAnalysisResult['road_type']
-    if (summary.includes('highway') || summary.includes('motorway') || summary.includes('otoyol')) {
+    
+    // Check for highway indicators
+    const isHighway = 
+      summary.includes('highway') || 
+      summary.includes('motorway') || 
+      summary.includes('otoyol') ||
+      summary.includes('anayol') ||
+      // KKTC main roads
+      summary.includes('girne') ||
+      summary.includes('lefkoşa') ||
+      summary.includes('gazimağusa') ||
+      summary.includes('güzelyurt') ||
+      // Turkish main road patterns
+      /\b[ed]-?\d+\b/.test(summary) || // E5, D400, E-80
+      /\bo-?\d+\b/.test(summary)       // O-1, O2
+
+    // Check for arterial indicators  
+    const isArterial = 
+      summary.includes('bulvar') || 
+      summary.includes('cadde') ||
+      summary.includes('avenue')
+
+    // Check for local indicators
+    const isLocal = 
+      summary.includes('sokak') || 
+      summary.includes('street')
+
+    // Determine road type with multiple factors
+    if (isHighway) {
       road_type = 'highway'
-    } else if (summary.includes('arterial') || summary.includes('cadde') || summary.includes('bulvar')) {
+    } else if (isArterial) {
       road_type = 'arterial'
-    } else if (summary.includes('rural') || summary.includes('kırsal')) {
-      road_type = 'rural'
-    } else if (summary.includes('local') || summary.includes('sokak')) {
+    } else if (isLocal) {
       road_type = 'local'
+    } else if (distanceKm > 10 && average_speed > 40) {
+      // Long distance + decent speed = likely highway or rural main road
+      road_type = average_speed > 60 ? 'highway' : 'rural'
+    } else if (distanceKm > 5) {
+      road_type = 'arterial'
     } else {
       road_type = 'collector'
     }
+    
+    console.log(`🛣️ Road type: ${road_type} (summary: "${route.summary}", dist: ${distanceKm.toFixed(1)}km, avg: ${average_speed}km/h)`)
 
     // Step 6: Parallel API calls for nearby context
     const [schoolsNearby, geocodingData] = await Promise.allSettled([
@@ -286,6 +319,12 @@ export async function analyzeRouteForForm(
       console.warn(`⚠️ Roads API failed (using estimated ${speed_limit} km/h for ${road_type}):`, error instanceof Error ? error.message : error)
       // Keep the estimated speed_limit - no change needed
     }
+
+    // Step 9.5: Adjust average speed (2x multiplier, max 60% of limit)
+    const adjustedSpeed = average_speed * 2
+    const maxAllowedSpeed = Math.round(speed_limit * 0.6)
+    average_speed = Math.min(adjustedSpeed, maxAllowedSpeed)
+    console.log(`🚗 Adjusted speed: ${average_speed} km/h (limit: ${speed_limit} km/h)`)
 
     // Step 10: Estimate number of lanes based on road type
     let number_of_lanes: number

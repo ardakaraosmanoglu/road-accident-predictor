@@ -95,7 +95,7 @@ export function AutoWeatherStep({
 
   return (
     <div className="step-card animate-spring">
-      <div className="flex flex-col items-center justify-center text-center px-6 py-8 space-y-8">
+      <div className="flex flex-col items-center justify-center text-center px-4 py-4 space-y-4 md:space-y-6">
         {/* Large Weather Icon */}
         <div className={`icon-xlarge transition-all duration-500 ${
           status === 'loading' ? 'bg-blue-100 animate-pulse-ring' :
@@ -130,40 +130,40 @@ export function AutoWeatherStep({
         {/* Weather Stats */}
         {status === 'success' && weather && (
           <div className="w-full max-w-sm animate-fade-in">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <Thermometer className="h-5 w-5 text-red-500" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Thermometer className="h-4 w-4 text-red-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xl font-bold text-gray-900">{weather.temperature}°</p>
+                  <p className="text-lg font-bold text-gray-900">{weather.temperature}°</p>
                   <p className="text-xs text-gray-500">Sıcaklık</p>
                 </div>
               </div>
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <Droplets className="h-5 w-5 text-blue-500" />
+              <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Droplets className="h-4 w-4 text-blue-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xl font-bold text-gray-900">{weather.humidity}%</p>
+                  <p className="text-lg font-bold text-gray-900">{weather.humidity}%</p>
                   <p className="text-xs text-gray-500">Nem</p>
                 </div>
               </div>
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <Wind className="h-5 w-5 text-gray-500" />
+              <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <Wind className="h-4 w-4 text-gray-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xl font-bold text-gray-900">{weather.wind_speed}</p>
+                  <p className="text-lg font-bold text-gray-900">{weather.wind_speed}</p>
                   <p className="text-xs text-gray-500">km/h</p>
                 </div>
               </div>
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <Eye className="h-5 w-5 text-green-500" />
+              <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Eye className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xl font-bold text-gray-900">{weather.visibility}</p>
+                  <p className="text-lg font-bold text-gray-900">{weather.visibility}</p>
                   <p className="text-xs text-gray-500">km görüş</p>
                 </div>
               </div>

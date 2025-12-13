@@ -41,7 +41,7 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
 
   return (
     <div className="step-card animate-spring">
-      <div className="flex flex-col items-center justify-center text-center px-6 py-8 space-y-8">
+      <div className="flex flex-col items-center justify-center text-center px-4 py-4 space-y-4 md:space-y-6">
         {/* Large Icon */}
         <div className="icon-xlarge bg-green-100 animate-success">
           <CheckCircle className="h-16 w-16 text-green-500" />
@@ -55,30 +55,30 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
 
         {/* Time Info Grid */}
         <div className="w-full max-w-sm">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/80 rounded-2xl p-5 mobile-card text-center">
-              <span className="text-4xl block mb-2">🕐</span>
-              <p className="text-2xl font-bold text-gray-900">{timeContext.hour_of_day}:00</p>
-              <p className="text-xs text-gray-500 mt-1">Saat</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
+              <span className="text-2xl block mb-1">🕐</span>
+              <p className="text-xl font-bold text-gray-900">{timeContext.hour_of_day}:00</p>
+              <p className="text-xs text-gray-500">Saat</p>
             </div>
-            <div className="bg-white/80 rounded-2xl p-5 mobile-card text-center">
-              <span className="text-4xl block mb-2">📅</span>
-              <p className="text-lg font-bold text-gray-900">{getDayName(timeContext.day_of_week)}</p>
-              <p className="text-xs text-gray-500 mt-1">Gün</p>
+            <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
+              <span className="text-2xl block mb-1">📅</span>
+              <p className="text-base font-bold text-gray-900">{getDayName(timeContext.day_of_week)}</p>
+              <p className="text-xs text-gray-500">Gün</p>
             </div>
-            <div className="bg-white/80 rounded-2xl p-5 mobile-card text-center">
-              <span className="text-4xl block mb-2">📆</span>
-              <p className="text-2xl font-bold text-gray-900">{timeContext.month}</p>
-              <p className="text-xs text-gray-500 mt-1">Ay</p>
+            <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
+              <span className="text-2xl block mb-1">📆</span>
+              <p className="text-xl font-bold text-gray-900">{timeContext.month}</p>
+              <p className="text-xs text-gray-500">Ay</p>
             </div>
-            <div className={`rounded-2xl p-5 mobile-card text-center ${
+            <div className={`rounded-2xl p-3 mobile-card text-center ${
               timeContext.is_rush_hour ? 'bg-orange-100' : 'bg-green-50'
             }`}>
-              <span className="text-4xl block mb-2">{timeContext.is_rush_hour ? '🚗' : '✅'}</span>
-              <p className="text-lg font-bold text-gray-900">
+              <span className="text-2xl block mb-1">{timeContext.is_rush_hour ? '🚗' : '✅'}</span>
+              <p className="text-base font-bold text-gray-900">
                 {timeContext.is_rush_hour ? 'Yoğun' : 'Sakin'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Trafik</p>
+              <p className="text-xs text-gray-500">Trafik</p>
             </div>
           </div>
         </div>

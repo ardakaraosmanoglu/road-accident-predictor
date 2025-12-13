@@ -1,15 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { CheckCircle, AlertTriangle } from 'lucide-react'
-import {
-  searchAlcoholDatabase,
-  estimatePromil,
-  getWaitTimeHours,
-  LEGAL_LIMITS
-} from '@/lib/alcohol-database'
 
 export interface SafetyData {
   seatbelt_usage: boolean
@@ -28,6 +20,37 @@ interface DriverSafetyStepProps {
 
 type QuestionStep = 'seatbelt' | 'alcohol' | 'fatigue' | 'complete'
 
+const DRINK_TYPES = [
+  { id: 'bira', emoji: '🍺', name: 'Bira' },
+  { id: 'sarap', emoji: '🍷', name: 'Şarap' },
+  { id: 'raki', emoji: '🥃', name: 'Rakı' },
+  { id: 'viski', emoji: '🥃', name: 'Viski' },
+  { id: 'votka', emoji: '🍸', name: 'Votka' },
+  { id: 'kokteyl', emoji: '🍹', name: 'Kokteyl' }
+]
+
+const DRINK_COUNTS = [1, 2, 3, 4, 5]
+
+// Map drink type + count to alcohol level
+function getAlcoholLevel(drinkType: string, count: number): SafetyData['alcohol_consumption'] {
+  // Her içki için ortalama promil değeri (1 adet için)
+  const promilPerDrink: Record<string, number> = {
+    bira: 0.28,
+    sarap: 0.21,
+    raki: 0.20,
+    viski: 0.18,
+    votka: 0.18,
+    kokteyl: 0.25
+  }
+  
+  const totalPromil = (promilPerDrink[drinkType] || 0.2) * count
+  
+  if (totalPromil < 0.30) return 'light'
+  if (totalPromil < 0.50) return 'moderate'
+  if (totalPromil < 0.80) return 'heavy'
+  return 'severe'
+}
+
 export function DriverSafetyStep({ 
   onSafetyDataComplete, 
   onStatusChange,
@@ -42,7 +65,9 @@ export function DriverSafetyStep({
     driver_experience: 'experienced',
     vehicle_maintenance_check: true
   })
-  const [showAlcoholInput, setShowAlcoholInput] = useState(false)
+  const [showAlcoholSelector, setShowAlcoholSelector] = useState(false)
+  const [selectedDrinkType, setSelectedDrinkType] = useState<string | null>(null)
+  const [selectedDrinkCount, setSelectedDrinkCount] = useState<number | null>(null)
 
   const handleSeatbeltAnswer = (answer: boolean) => {
     setSafetyData(prev => ({ ...prev, seatbelt_usage: answer }))
@@ -51,19 +76,29 @@ export function DriverSafetyStep({
 
   const handleAlcoholAnswer = (hasAlcohol: boolean) => {
     if (hasAlcohol) {
-      setShowAlcoholInput(true)
+      setShowAlcoholSelector(true)
     } else {
       setSafetyData(prev => ({ ...prev, alcohol_consumption: 'none', alcohol_details: '' }))
       setQuestionStep('fatigue')
     }
   }
 
-  const handleAlcoholDetailsSubmit = () => {
-    const detected = searchAlcoholDatabase(safetyData.alcohol_details)
-    if (detected) {
-      setSafetyData(prev => ({ ...prev, alcohol_consumption: detected.level }))
+  const handleDrinkTypeSelect = (drinkId: string) => {
+    setSelectedDrinkType(drinkId)
+  }
+
+  const handleDrinkCountSelect = (count: number) => {
+    setSelectedDrinkCount(count)
+    if (selectedDrinkType) {
+      const level = getAlcoholLevel(selectedDrinkType, count)
+      const details = `${count} ${DRINK_TYPES.find(d => d.id === selectedDrinkType)?.name || ''}`
+      setSafetyData(prev => ({ 
+        ...prev, 
+        alcohol_consumption: level,
+        alcohol_details: details
+      }))
+      setQuestionStep('fatigue')
     }
-    setQuestionStep('fatigue')
   }
 
   const handleFatigueAnswer = (fatigue: SafetyData['driver_fatigue']) => {
@@ -73,9 +108,6 @@ export function DriverSafetyStep({
     onStatusChange('completed')
     onSafetyDataComplete(finalData)
   }
-
-  const alcoholPromil = safetyData.alcohol_details ? estimatePromil(safetyData.alcohol_details) : 0
-  const alcoholWaitTime = safetyData.alcohol_details ? getWaitTimeHours(safetyData.alcohol_details) : 0
 
   return (
     <div className="step-card animate-spring">
@@ -105,8 +137,9 @@ export function DriverSafetyStep({
           </h2>
           <p className="text-base text-gray-500">
             {questionStep === 'seatbelt' ? 'Kemerinizi taktınız mı?' :
-             questionStep === 'alcohol' && !showAlcoholInput ? 'Son 24 saatte alkol aldınız mı?' :
-             questionStep === 'alcohol' && showAlcoholInput ? 'Ne içtiğinizi yazın' :
+             questionStep === 'alcohol' && !showAlcoholSelector ? 'Son 24 saatte alkol aldınız mı?' :
+             questionStep === 'alcohol' && showAlcoholSelector && !selectedDrinkType ? 'Ne içtiniz?' :
+             questionStep === 'alcohol' && showAlcoholSelector && selectedDrinkType ? 'Kaç adet?' :
              questionStep === 'fatigue' ? 'Yorgunluk seviyenizi seçin' :
              'Risk analizi başlıyor...'}
           </p>
@@ -155,7 +188,7 @@ export function DriverSafetyStep({
         )}
 
         {/* Question 2: Alcohol - Yes/No */}
-        {questionStep === 'alcohol' && !showAlcoholInput && (
+        {questionStep === 'alcohol' && !showAlcoholSelector && (
           <div className="w-full max-w-sm space-y-4 animate-fade-in">
             <button
               onClick={() => handleAlcoholAnswer(false)}
@@ -174,50 +207,43 @@ export function DriverSafetyStep({
           </div>
         )}
 
-        {/* Alcohol Details Input */}
-        {questionStep === 'alcohol' && showAlcoholInput && (
+        {/* Alcohol Selector - Drink Type */}
+        {questionStep === 'alcohol' && showAlcoholSelector && !selectedDrinkType && (
           <div className="w-full max-w-sm space-y-4 animate-fade-in">
-            <Input
-              placeholder="Örnek: 2 kadeh şarap, 1 bira..."
-              value={safetyData.alcohol_details}
-              onChange={(e) => setSafetyData(prev => ({ ...prev, alcohol_details: e.target.value }))}
-              className="h-14 text-lg rounded-2xl px-5 bg-white"
-              autoFocus
-            />
-            
-            {safetyData.alcohol_details && alcoholPromil > 0 && (
-              <div className={`rounded-2xl p-4 ${
-                alcoholPromil >= LEGAL_LIMITS.HUSUSI_ARAC 
-                  ? 'bg-red-50 border-2 border-red-200' 
-                  : 'bg-yellow-50 border-2 border-yellow-200'
-              }`}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Tahmini Promil:</span>
-                  <span className={`text-xl font-bold ${
-                    alcoholPromil >= LEGAL_LIMITS.HUSUSI_ARAC ? 'text-red-600' : 'text-yellow-600'
-                  }`}>
-                    {alcoholPromil.toFixed(2)}‰
-                  </span>
-                </div>
-                {alcoholWaitTime > 0 && (
-                  <p className="text-sm text-gray-600">
-                    ⏰ Tavsiye: En az {alcoholWaitTime} saat bekleyin
-                  </p>
-                )}
-                {alcoholPromil >= LEGAL_LIMITS.HUSUSI_ARAC && (
-                  <p className="text-sm text-red-700 font-medium mt-2">
-                    ⚠️ Yasal sınırın üzerinde!
-                  </p>
-                )}
-              </div>
-            )}
+            <p className="text-sm text-gray-500 mb-2">Ne içtiniz?</p>
+            <div className="grid grid-cols-3 gap-3">
+              {DRINK_TYPES.map(drink => (
+                <button
+                  key={drink.id}
+                  onClick={() => handleDrinkTypeSelect(drink.id)}
+                  className="mobile-btn bg-white border-2 border-gray-200 hover:border-orange-400 text-gray-700 flex flex-col items-center justify-center py-4"
+                >
+                  <span className="text-3xl mb-1">{drink.emoji}</span>
+                  <span className="text-sm">{drink.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-            <Button
-              onClick={handleAlcoholDetailsSubmit}
-              className="w-full mobile-btn bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Devam Et
-            </Button>
+        {/* Alcohol Selector - Drink Count */}
+        {questionStep === 'alcohol' && showAlcoholSelector && selectedDrinkType && !selectedDrinkCount && (
+          <div className="w-full max-w-sm space-y-4 animate-fade-in">
+            <p className="text-sm text-gray-500 mb-2">Kaç adet?</p>
+            <div className="flex justify-center gap-3">
+              {DRINK_COUNTS.map(count => (
+                <button
+                  key={count}
+                  onClick={() => handleDrinkCountSelect(count)}
+                  className="w-14 h-14 rounded-2xl bg-white border-2 border-gray-200 hover:border-orange-400 text-gray-700 font-bold text-xl flex items-center justify-center"
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 text-center mt-2">
+              {DRINK_TYPES.find(d => d.id === selectedDrinkType)?.emoji} {DRINK_TYPES.find(d => d.id === selectedDrinkType)?.name} seçildi
+            </p>
           </div>
         )}
 

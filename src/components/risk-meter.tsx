@@ -22,7 +22,19 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
     }
   }
 
+  const getRiskLabel = (level: string) => {
+    switch (level) {
+      case 'very_low': return 'Çok Düşük'
+      case 'low': return 'Düşük'
+      case 'medium': return 'Orta'
+      case 'high': return 'Yüksek'
+      case 'very_high': return 'Çok Yüksek'
+      default: return 'Bilinmiyor'
+    }
+  }
+
   const color = getRiskColor(riskLevel)
+  const label = getRiskLabel(riskLevel)
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
@@ -63,7 +75,7 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
             {score}
           </div>
           <div className="text-sm text-gray-600 font-medium">
-            Risk Score
+            Risk Puanı
           </div>
         </div>
       </div>
@@ -74,7 +86,7 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
           className="inline-block px-4 py-2 rounded-full text-white font-semibold text-sm"
           style={{ backgroundColor: color }}
         >
-          {riskLevel.replace('_', ' ').toUpperCase()} RISK
+          {label} Risk
         </div>
       </div>
     </div>

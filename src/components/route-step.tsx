@@ -214,45 +214,44 @@ export function RouteStep({
 
   return (
     <div className="step-card animate-spring">
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="text-center px-6 pt-6 pb-4">
-          <div className={`icon-large mx-auto mb-4 ${
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Header - kompakt */}
+        <div className="text-center px-4 pt-3 pb-2 flex-shrink-0">
+          <div className={`w-12 h-12 rounded-2xl mx-auto mb-2 flex items-center justify-center ${
             status === 'loading' ? 'bg-blue-100' :
-            status === 'success' ? 'bg-green-100 animate-success' :
+            status === 'success' ? 'bg-green-100' :
             status === 'error' ? 'bg-red-100' : 'bg-purple-100'
           }`}>
             {status === 'loading' ? (
-              <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
+              <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
             ) : status === 'success' ? (
-              <CheckCircle className="h-10 w-10 text-green-500" />
+              <CheckCircle className="h-6 w-6 text-green-500" />
             ) : status === 'error' ? (
-              <AlertCircle className="h-10 w-10 text-red-500" />
+              <AlertCircle className="h-6 w-6 text-red-500" />
             ) : (
-              <span className="text-4xl">📍</span>
+              <span className="text-2xl">📍</span>
             )}
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900">
             {status === 'loading' ? 'Rota Analiz Ediliyor...' :
              status === 'success' ? 'Rota Hazır!' :
              status === 'error' ? 'Hata Oluştu' : 'Nereye Gidiyorsunuz?'}
           </h2>
-          <p className="text-base text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 mt-1">
             {status === 'idle' ? 'Varış noktasını yazın' :
              status === 'loading' ? 'Trafik bilgileri alınıyor...' :
              status === 'success' ? 'Trafik ve yol bilgileri alındı' : error || ''}
           </p>
         </div>
 
-        {/* Origin Badge */}
-        <div className="px-6 pb-4">
-          <div className="bg-green-50 rounded-2xl px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-              <MapPin className="h-5 w-5 text-white" />
+        {/* Origin Badge - kompakt */}
+        <div className="px-4 pb-2 flex-shrink-0">
+          <div className="bg-green-50 rounded-xl px-3 py-2 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+              <MapPin className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-green-600 font-medium">Başlangıç</p>
-              <p className="text-sm text-gray-700 truncate">
+              <p className="text-xs text-gray-700 truncate">
                 {originAddress || 'Konum alınıyor...'}
               </p>
             </div>
@@ -264,7 +263,7 @@ export function RouteStep({
           googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
           libraries={libraries}
         >
-          <div className="px-6 pb-4">
+          <div className="px-4 pb-2 flex-shrink-0">
             <Autocomplete
               onLoad={onDestinationAutocompleteLoad}
               onPlaceChanged={onDestinationPlaceChanged}
@@ -274,14 +273,14 @@ export function RouteStep({
               }}
             >
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-white" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-white" />
                 </div>
                 <Input
                   placeholder="Varış adresini yazın..."
                   value={destinationInput}
                   onChange={(e) => setDestinationInput(e.target.value)}
-                  className="h-16 text-lg pl-16 pr-4 rounded-2xl bg-white border-2 border-gray-200 focus:border-purple-500"
+                  className="h-12 text-base pl-14 pr-4 rounded-xl bg-white border-2 border-gray-200 focus:border-purple-500"
                   disabled={status === 'loading' || !location}
                 />
               </div>
@@ -289,7 +288,7 @@ export function RouteStep({
           </div>
 
           {/* Map */}
-          <div className="flex-1 px-6 pb-4 min-h-[200px]">
+          <div className="flex-1 px-4 pb-2 min-h-[120px]">
             <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm">
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
@@ -329,26 +328,26 @@ export function RouteStep({
 
         {/* Success Stats */}
         {status === 'success' && routeData && (
-          <div className="px-6 pb-4 animate-fade-in">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card text-center">
-                <Car className="h-6 w-6 text-orange-500 mx-auto mb-2" />
-                <p className="text-lg font-bold text-gray-900">
+          <div className="px-4 pb-2 animate-fade-in flex-shrink-0">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
+                <Car className="h-4 w-4 text-orange-500 mx-auto mb-1" />
+                <p className="text-sm font-bold text-gray-900">
                   {routeData.traffic_density === 'low' ? 'Düşük' :
                    routeData.traffic_density === 'medium' ? 'Orta' :
                    routeData.traffic_density === 'high' ? 'Yüksek' : 'Çok Yüksek'}
                 </p>
                 <p className="text-xs text-gray-500">Trafik</p>
               </div>
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card text-center">
-                <Gauge className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-                <p className="text-lg font-bold text-gray-900">{routeData.average_speed}</p>
-                <p className="text-xs text-gray-500">km/h Ort.</p>
+              <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
+                <Gauge className="h-4 w-4 text-blue-500 mx-auto mb-1" />
+                <p className="text-sm font-bold text-gray-900">{routeData.average_speed}</p>
+                <p className="text-xs text-gray-500">km/h</p>
               </div>
-              <div className="bg-white/80 rounded-2xl p-4 mobile-card text-center">
-                <Navigation className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-                <p className="text-lg font-bold text-gray-900">{routeData.speed_limit}</p>
-                <p className="text-xs text-gray-500">km/h Limit</p>
+              <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
+                <Navigation className="h-4 w-4 text-purple-500 mx-auto mb-1" />
+                <p className="text-sm font-bold text-gray-900">{routeData.speed_limit}</p>
+                <p className="text-xs text-gray-500">Limit</p>
               </div>
             </div>
           </div>
@@ -356,10 +355,10 @@ export function RouteStep({
 
         {/* Next Button */}
         {status === 'success' && (
-          <div className="px-6 pb-6 safe-area-bottom">
+          <div className="px-4 pb-4 safe-area-bottom flex-shrink-0">
             <button
               onClick={onNext}
-              className="w-full mobile-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
               İleri
             </button>
@@ -368,11 +367,11 @@ export function RouteStep({
 
         {/* Loading Dots */}
         {status === 'loading' && (
-          <div className="px-6 pb-6 flex justify-center gap-2">
+          <div className="px-4 pb-4 flex justify-center gap-2 flex-shrink-0">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+                className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}

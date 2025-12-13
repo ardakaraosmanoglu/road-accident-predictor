@@ -138,12 +138,30 @@
     background: rgba(255, 255, 255, 0.85);
   }
 
-  /* Full screen step card */
+  /* Full screen step card - mobil tam ekran, scroll yok */
   .step-card {
-    min-height: calc(100dvh - 140px);
+    height: calc(100dvh - 80px);
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
+  }
+
+  /* İçerik otomatik sığsın */
+  .step-card > div {
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  /* Sadece sonuç ekranı scroll yapabilir */
+  .step-card.results-card {
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
+
+  .step-card.results-card > div {
+    max-height: unset;
+    overflow: visible;
   }
 
   /* Large touch targets */
@@ -342,7 +360,8 @@
   /* Desktop-specific styles */
   @media (min-width: 768px) {
     .desktop-wizard-container {
-      max-width: 420px;
+      width: 480px;
+      height: 750px;
       margin: 0 auto;
       background: white;
       border-radius: 32px;
@@ -353,8 +372,16 @@
     }
 
     .step-card {
-      min-height: 600px;
-      max-height: 75vh;
+      height: 100%;
+      min-height: unset;
+      max-height: unset;
+      overflow-y: auto;
+      justify-content: flex-start;
+      padding-top: 2rem;
+    }
+
+    .step-card.results-card {
+      overflow-y: auto;
     }
 
     .app-header-desktop {
@@ -366,7 +393,8 @@
 
   @media (min-width: 1024px) {
     .desktop-wizard-container {
-      max-width: 440px;
+      width: 520px;
+      height: 780px;
     }
   }
 

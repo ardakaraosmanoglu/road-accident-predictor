@@ -42,12 +42,13 @@ export function predictAccidentRisk(input: AccidentPredictionInput): AccidentRis
   // Determine risk level
   const riskLevel = getRiskLevel(normalizedScore)
 
-  // Generate contributing factors and recommendations
+  // Generate contributing factors (açıklamalı uyarılar)
+  // Her faktörün reason'ını | ile ayırıp ayrı ayrı liste yap
   const contributingFactors = riskFactors
     .filter(factor => factor.score > 30)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map(factor => factor.name)
+    .flatMap(factor => factor.reason.split(' | ').map(r => r.trim()).filter(r => r.length > 0))
+    .slice(0, 8) // max 8 uyarı göster
 
   const recommendations = generateRecommendations(input, riskFactors)
 
@@ -74,64 +75,58 @@ function calculateWeatherRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'cloudy':
       score += 10
-      reason = 'Reduced visibility'
+      reason = '☁️ Bulutlu hava - görüş mesafesi azalmış olabilir'
       break
     case 'rain':
       score += 40
-      reason = 'Slippery roads and reduced visibility'
+      reason = '🌧️ Yağışlı hava - yollar kaygan, takip mesafesini artırın'
       break
     case 'fog':
       score += 60
-      reason = 'Severely reduced visibility'
+      reason = '🌫️ Sisli hava - görüş ciddi şekilde kısıtlı, sis farı kullanın'
       break
     case 'snow':
       score += 70
-      reason = 'Icy conditions and poor visibility'
+      reason = '❄️ Karlı hava - buzlanma riski var, yavaş sürün'
       break
     case 'storm':
       score += 85
-      reason = 'Extreme weather conditions'
+      reason = '⛈️ Fırtına - seyahati mümkünse erteleyin'
       break
   }
 
   // Temperature effects
   if (input.temperature < 0) {
     score += 25
-    reason += ', freezing conditions'
+    reason += reason ? ' | Dondurucu soğuk' : '🥶 Dondurucu soğuk - buzlanma riski'
   } else if (input.temperature > 35) {
     score += 15
-    reason += ', extreme heat affecting driver alertness'
+    reason += reason ? ' | Aşırı sıcak' : '🌡️ Aşırı sıcak - dikkat dağılabilir'
   }
 
   // Visibility effects
   if (input.visibility < 1) {
     score += 50
-    reason += ', very poor visibility'
+    reason += reason ? ' | Çok düşük görüş' : '👁️ Görüş mesafesi çok düşük'
   } else if (input.visibility < 5) {
     score += 25
-    reason += ', reduced visibility'
+    reason += reason ? ' | Düşük görüş' : '👁️ Görüş mesafesi düşük'
   }
 
   // Wind effects
   if (input.wind_speed > 60) {
     score += 30
-    reason += ', strong winds'
+    reason += reason ? ' | Şiddetli rüzgar' : '💨 Şiddetli rüzgar - direksiyon hakimiyetine dikkat'
   } else if (input.wind_speed > 40) {
     score += 15
-    reason += ', moderate winds'
-  }
-
-  // Humidity effects
-  if (input.humidity > 90) {
-    score += 10
-    reason += ', high humidity reducing comfort'
+    reason += reason ? ' | Kuvvetli rüzgar' : '💨 Kuvvetli rüzgar'
   }
 
   return {
     name: 'Hava',
     weight: 0.25,
     score: Math.min(100, score),
-    reason: reason || 'İyi hava koşulları'
+    reason: reason || '✅ Hava koşulları uygun'
   }
 }
 
@@ -149,11 +144,11 @@ function calculateTrafficRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'high':
       score += 35
-      reason = 'High traffic density'
+      reason = '🚗 Yoğun trafik - takip mesafesine dikkat edin'
       break
     case 'very_high':
       score += 60
-      reason = 'Very high traffic density'
+      reason = '🚗 Çok yoğun trafik - sabırlı olun ve güvenli mesafe bırakın'
       break
   }
 
@@ -162,30 +157,30 @@ function calculateTrafficRisk(input: AccidentPredictionInput): RiskFactor {
     const overSpeed = input.average_speed - input.speed_limit
     if (overSpeed > 30) {
       score += 50
-      reason += ', aşırı hız'
+      reason += reason ? ' | Aşırı hız' : `🚨 Hız limiti çok aşılmış (${input.speed_limit} km/h)`
     } else if (overSpeed > 15) {
       score += 30
-      reason += ', hız limiti aşıldı'
+      reason += reason ? ' | Hız aşımı' : `⚠️ Hız limiti aşılmış (${input.speed_limit} km/h)`
     } else if (overSpeed > 5) {
       score += 15
-      reason += ', hafif hız aşımı'
+      reason += reason ? ' | Hafif hız aşımı' : `⚠️ Hafif hız aşımı (${input.speed_limit} km/h)`
     }
   }
 
   // Vehicle count effects
   if (input.vehicle_count > 1000) {
     score += 25
-    reason += ', heavy traffic volume'
+    reason += reason ? ' | Yoğun araç trafiği' : '🚗 Yoğun araç trafiği'
   } else if (input.vehicle_count > 500) {
     score += 15
-    reason += ', moderate traffic volume'
+    reason += reason ? ' | Orta yoğunlukta trafik' : '🚗 Orta yoğunlukta trafik'
   }
 
   return {
     name: 'Trafik',
     weight: 0.15,
     score: Math.min(100, score),
-    reason: reason || 'Normal trafik koşulları'
+    reason: reason || '✅ Trafik akışı normal'
   }
 }
 
@@ -203,11 +198,11 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'fair':
       score += 25
-      reason = 'Fair road conditions'
+      reason = '🛣️ Yol durumu orta - dikkatli sürün'
       break
     case 'poor':
       score += 50
-      reason = 'Poor road conditions'
+      reason = '🛣️ Yol durumu kötü - çukur ve bozuklara dikkat'
       break
   }
 
@@ -215,7 +210,7 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
   switch (input.road_type) {
     case 'highway':
       score += 20
-      reason += ', high-speed highway'
+      reason += reason ? ' | Otoyol' : '🛣️ Yüksek hızlı otoyol - mesafe koruyun'
       break
     case 'arterial':
       score += 15
@@ -228,17 +223,17 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'rural':
       score += 25
-      reason += ', rural road conditions'
+      reason += reason ? ' | Kırsal yol' : '🛤️ Kırsal yol - aydınlatma yetersiz olabilir'
       break
   }
 
   // Lane configuration
   if (input.number_of_lanes === 1) {
     score += 20
-    reason += ', single lane'
+    reason += reason ? ' | Tek şerit' : '🚧 Tek şeritli yol - sollama zorlaşır'
   } else if (input.number_of_lanes > 6) {
     score += 15
-    reason += ', complex multi-lane configuration'
+    reason += reason ? ' | Çok şeritli' : '🛣️ Çok şeritli yol - şerit değiştirirken dikkat'
   }
 
   // Intersection risk
@@ -248,7 +243,7 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'yield':
       score += 15
-      reason += ', yield intersection'
+      reason += reason ? ' | Yol ver işareti' : '⚠️ Yol ver kavşağı - önceliğe dikkat'
       break
     case 'stop_sign':
       score += 10
@@ -258,7 +253,7 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
       break
     case 'roundabout':
       score += 20
-      reason += ', roundabout complexity'
+      reason += reason ? ' | Dönel kavşak' : '🔄 Dönel kavşak - dönüş yönüne dikkat'
       break
   }
 
@@ -266,7 +261,7 @@ function calculateRoadRisk(input: AccidentPredictionInput): RiskFactor {
     name: 'Yol',
     weight: 0.10,
     score: Math.min(100, score),
-    reason: reason || 'İyi yol koşulları'
+    reason: reason || '✅ Yol koşulları uygun'
   }
 }
 
@@ -277,44 +272,44 @@ function calculateTimeRisk(input: AccidentPredictionInput): RiskFactor {
   // Rush hour effects
   if (input.is_rush_hour) {
     score += 30
-    reason = 'Rush hour traffic'
+    reason = '⏰ Saat yoğun trafik saati - sabırlı olun'
   }
 
   // Hour of day effects
   if (input.hour_of_day >= 22 || input.hour_of_day <= 5) {
     score += 35
-    reason += ', nighttime driving'
+    reason += reason ? ' | Gece sürüşü' : '🌙 Gece sürüşü - görüş azalmış, uykuya dikkat'
   } else if (input.hour_of_day >= 6 && input.hour_of_day <= 9) {
     score += 20
-    reason += ', morning rush hour'
+    reason += reason ? ' | Sabah trafiği' : '🌅 Sabah trafiği - güneş gözünüze gelebilir'
   } else if (input.hour_of_day >= 16 && input.hour_of_day <= 19) {
     score += 25
-    reason += ', evening rush hour'
+    reason += reason ? ' | Akşam trafiği' : '🌆 Akşam trafiği - yorgunluk artmış olabilir'
   }
 
   // Weekend effects
   if (input.day_of_week === 'saturday' || input.day_of_week === 'sunday') {
     score += 15
-    reason += ', weekend traffic patterns'
+    reason += reason ? ' | Hafta sonu' : '📅 Hafta sonu - beklenmedik trafik olabilir'
   }
 
   // Holiday effects
   if (input.is_holiday) {
     score += 20
-    reason += ', holiday traffic'
+    reason += reason ? ' | Tatil günü' : '🎉 Tatil günü - alkollü sürücülere dikkat'
   }
 
   // Winter months (higher accident rates)
   if (input.month >= 11 || input.month <= 2) {
     score += 15
-    reason += ', winter season'
+    reason += reason ? ' | Kış mevsimi' : '❄️ Kış mevsimi - erken karanlık, buzlanma riski'
   }
 
   return {
     name: 'Zaman',
     weight: 0.10,
     score: Math.min(100, score),
-    reason: reason || 'Normal zaman koşulları'
+    reason: reason || '✅ Zaman koşulları uygun'
   }
 }
 
@@ -326,33 +321,33 @@ function calculateLocationRisk(input: AccidentPredictionInput): RiskFactor {
   switch (input.urban_rural) {
     case 'urban':
       score += 25
-      reason = 'Urban area complexity'
+      reason = '🏙️ Şehir içi - yaya ve bisikletlilere dikkat'
       break
     case 'suburban':
       score += 15
       break
     case 'rural':
       score += 20
-      reason = 'Rural road conditions'
+      reason = '🌾 Kırsal bölge - hayvan geçişine dikkat'
       break
   }
 
   // Special zones
   if (input.school_zone) {
     score += 20
-    reason += ', school zone'
+    reason += reason ? ' | Okul bölgesi' : '🏫 Okul bölgesi - çocuklara dikkat, yavaşlayın'
   }
 
   if (input.construction_zone) {
     score += 35
-    reason += ', construction zone'
+    reason += reason ? ' | İnşaat bölgesi' : '🚧 İnşaat bölgesi - işçilere dikkat, işaretleri takip edin'
   }
 
   return {
     name: 'Konum',
     weight: 0.05,
     score: Math.min(100, score),
-    reason: reason || 'Normal konum koşulları'
+    reason: reason || '✅ Konum koşulları uygun'
   }
 }
 
@@ -367,19 +362,19 @@ function calculateDriverVehicleRisk(input: AccidentPredictionInput): RiskFactor 
       break
     case 'light':
       score += 40
-      reason = '🍺 Alcohol consumption detected (light)'
+      reason = '🍺 Alkol tespit edildi - refleksleriniz yavaşlamış olabilir'
       break
     case 'moderate':
       score += 70
-      reason = '🍺 Moderate alcohol consumption - UNSAFE TO DRIVE'
+      reason = '🍺 Orta seviye alkol - ARAÇ KULLANMAYIN'
       break
     case 'heavy':
       score += 90
-      reason = '🍺 Heavy alcohol consumption - CRITICAL DANGER'
+      reason = '🍺 Yüksek alkol - KRİTİK TEHLİKE, kesinlikle kullanmayın'
       break
     case 'severe':
       score += 100
-      reason = '🍺 Severe intoxication - EXTREME DANGER'
+      reason = '🍺 Ağır sarhoşluk - AŞIRI TEHLİKE, acil yardım alın'
       break
   }
 
@@ -390,15 +385,15 @@ function calculateDriverVehicleRisk(input: AccidentPredictionInput): RiskFactor 
       break
     case 'normal':
       score += 10
-      reason += reason ? ', normal tiredness' : 'Normal tiredness'
+      reason += reason ? ' | Normal yorgunluk' : '😐 Normal yorgunluk seviyesi'
       break
     case 'tired':
       score += 35
-      reason += reason ? ', driver is tired' : '😴 Driver is tired'
+      reason += reason ? ' | Yorgun' : '😴 Yorgunsunuz - 15-20 dk mola verin'
       break
     case 'very_tired':
       score += 60
-      reason += reason ? ', driver is very tired' : '😴 Driver is very tired - HIGH RISK'
+      reason += reason ? ' | Çok yorgun' : '😴 Çok yorgunsunuz - seyahati erteleyin veya şoför değiştirin'
       break
   }
 
@@ -412,24 +407,24 @@ function calculateDriverVehicleRisk(input: AccidentPredictionInput): RiskFactor 
       break
     case 'intermediate':
       score += 15
-      reason += reason ? ', intermediate driver' : 'Intermediate driver experience'
+      reason += reason ? ' | Orta tecrübe' : '🔰 Orta seviye tecrübe - dikkatli sürün'
       break
     case 'beginner':
       score += 30
-      reason += reason ? ', beginner driver' : '🔰 Beginner driver - less experience'
+      reason += reason ? ' | Acemi sürücü' : '🔰 Acemi sürücü - zorlu koşullarda ekstra dikkat'
       break
   }
 
   // SEATBELT USAGE - Critical safety factor
   if (!input.seatbelt_usage) {
     score += 50
-    reason += reason ? ', NO SEATBELT' : '⚠️ NO SEATBELT - Critical safety risk!'
+    reason += reason ? ' | KEMER YOK' : '🔴 Emniyet kemeri takılı değil - kaza anında ölüm riski 30x artar!'
   }
 
   // VEHICLE MAINTENANCE
   if (!input.vehicle_maintenance_check) {
     score += 25
-    reason += reason ? ', vehicle not checked' : '🔧 Vehicle maintenance not performed'
+    reason += reason ? ' | Araç kontrol edilmemiş' : '🔧 Araç bakımı yapılmamış - lastik, fren, yağ kontrolü yapın'
   }
 
   return {
@@ -454,10 +449,10 @@ function generateRecommendations(input: AccidentPredictionInput, riskFactors: Ri
   // ALKOL - KKTC yasal limit: 0.50 promil
   if (input.alcohol_consumption !== 'none') {
     if (input.alcohol_consumption === 'severe' || input.alcohol_consumption === 'heavy') {
-      recommendations.push('🚨 KULLANMA! Yasal sınır aşıldı (0.50‰)')
+      recommendations.push('İşte alkol kullanmayınız. Yasal sınırı aşıyorsunuz.')
       recommendations.push('⚠️ Ehliyet iptali + Ceza riski!')
     } else if (input.alcohol_consumption === 'moderate') {
-      recommendations.push('🚨 KULLANMA! Yasal sınır aşıldı (0.50‰)')
+      recommendations.push('İşte alkol kullanmayınız. Yasal sınırı aşıyorsunuz.')
       recommendations.push('🚕 Taksi veya toplu taşıma kullan')
     } else {
       recommendations.push('⚠️ Yasal sınırın altında, yine de dikkat!')
