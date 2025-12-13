@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { 
   AlertTriangle, CheckCircle, 
@@ -34,6 +35,10 @@ function getCurrentTimeContext() {
 }
 
 export function PredictionWizard() {
+  const locale = useLocale() as 'tr' | 'en'
+  const tWizard = useTranslations('wizard')
+  const tResults = useTranslations('results')
+
   const { currentStep, steps, nextStep, setStepStatus, goToStep } = useStepper()
   
   const [location, setLocation] = useState<LocationData | null>(null)
@@ -99,7 +104,7 @@ export function PredictionWizard() {
     // Fake loading delay: 5-20 seconds
     const fakeDelay = Math.random() * 15000 + 5000
     setTimeout(() => {
-      const result = predictAccidentRisk(input)
+      const result = predictAccidentRisk(input, locale)
       setPrediction(result)
       setIsCalculating(false)
     }, fakeDelay)
@@ -167,8 +172,8 @@ export function PredictionWizard() {
               <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-gray-900">Analiz Yapılıyor</h2>
-              <p className="text-base text-gray-500">26 parametre işleniyor...</p>
+              <h2 className="text-2xl font-bold text-gray-900">{tWizard('calculatingTitle')}</h2>
+              <p className="text-base text-gray-500">{tWizard('calculatingSubtitle')}</p>
             </div>
             <div className="flex gap-2">
               {[0, 1, 2].map((i) => (
@@ -193,9 +198,9 @@ export function PredictionWizard() {
                 size={180}
               />
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-gray-900">Risk Analizi</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{tResults('title')}</h2>
                 <p className="text-base text-gray-500">
-                  {prediction.confidence}% güvenle hesaplandı
+                  {tResults('confidence', { value: prediction.confidence })}
                 </p>
               </div>
             </div>
@@ -225,7 +230,7 @@ export function PredictionWizard() {
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-orange-500" />
-                  Dikkat Edilmesi Gerekenler
+                  {tResults('factors')}
                 </h3>
                 <div className="space-y-2">
                   {prediction.contributing_factors.map((warning, index) => (
@@ -244,7 +249,7 @@ export function PredictionWizard() {
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                Öneriler
+                {tResults('recommendations')}
               </h3>
               <div className="space-y-2">
                 {prediction.recommendations.map((rec, index) => (
@@ -266,7 +271,7 @@ export function PredictionWizard() {
                 className="w-full mobile-btn bg-gray-900 hover:bg-gray-800 text-white"
               >
                 <RotateCcw className="h-5 w-5 mr-2" />
-                Yeni Analiz Başlat
+                {tResults('newAnalysis')}
               </Button>
             </div>
           </div>
@@ -296,17 +301,17 @@ export function PredictionWizard() {
           <div className="flex justify-center gap-3">
             {location && (
               <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                ✓ Konum
+                {tWizard('badges.location')}
               </span>
             )}
             {weather && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                ✓ Hava
+                {tWizard('badges.weather')}
               </span>
             )}
             {routeData && (
               <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                ✓ Rota
+                {tWizard('badges.route')}
               </span>
             )}
           </div>

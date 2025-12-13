@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 export interface Step {
   id: string
@@ -23,40 +24,49 @@ export interface UseStepperReturn {
   progress: number
 }
 
-const initialSteps: Step[] = [
-  {
-    id: 'route',
-    title: 'Rota',
-    description: 'Nereye gidiyorsunuz?',
-    icon: '📍',
-    status: 'pending'
-  },
-  {
-    id: 'weather',
-    title: 'Hava Durumu',
-    description: 'Hava bilgileri alınıyor',
-    icon: '🌤️',
-    status: 'pending'
-  },
-  {
-    id: 'time',
-    title: 'Zaman',
-    description: 'Zaman bilgileri',
-    icon: '🕐',
-    status: 'pending'
-  },
-  {
-    id: 'safety',
-    title: 'Güvenlik',
-    description: 'Sürücü güvenliği',
-    icon: '🛡️',
-    status: 'pending'
-  }
-]
-
 export function useStepper(): UseStepperReturn {
+  const t = useTranslations('stepper')
+
+  const buildSteps = useCallback((): Step[] => [
+    {
+      id: 'route',
+      title: t('routeTitle'),
+      description: t('routeDescription'),
+      icon: '📍',
+      status: 'pending'
+    },
+    {
+      id: 'weather',
+      title: t('weatherTitle'),
+      description: t('weatherDescription'),
+      icon: '🌤️',
+      status: 'pending'
+    },
+    {
+      id: 'time',
+      title: t('timeTitle'),
+      description: t('timeDescription'),
+      icon: '🕐',
+      status: 'pending'
+    },
+    {
+      id: 'safety',
+      title: t('safetyTitle'),
+      description: t('safetyDescription'),
+      icon: '🛡️',
+      status: 'pending'
+    }
+  ], [t])
+
   const [currentStep, setCurrentStep] = useState(0)
-  const [steps, setSteps] = useState<Step[]>(initialSteps)
+  const [steps, setSteps] = useState<Step[]>(buildSteps)
+
+  useEffect(() => {
+    setSteps(prev => buildSteps().map((step, index) => ({
+      ...step,
+      status: prev[index]?.status ?? 'pending'
+    })))
+  }, [buildSteps])
 
   const goToStep = useCallback((step: number) => {
     if (step >= 0 && step < steps.length) {

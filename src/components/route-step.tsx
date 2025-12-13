@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { 
   MapPin, Loader2, CheckCircle, AlertCircle,
   Car, Gauge, Navigation 
 } from 'lucide-react'
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Autocomplete } from '@react-google-maps/api'
+import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer, Autocomplete } from '@react-google-maps/api'
 import { analyzeRouteForForm } from '@/lib/maps-integration'
 import type { RouteAnalysisResult } from '@/types/maps'
 
@@ -40,6 +41,15 @@ export function RouteStep({
   onStatusChange,
   onNext 
 }: RouteStepProps) {
+  const t = useTranslations('routeStep')
+  const tCommon = useTranslations('common')
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries
+  })
+
   const [locationStatus, setLocationStatus] = useState<'detecting' | 'ready' | 'error'>('detecting')
   const [location, setLocation] = useState<LocationData | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -58,7 +68,7 @@ export function RouteStep({
 
     if (!navigator.geolocation) {
       setLocationStatus('error')
-      setError('Tarayıcınız konum servisini desteklemiyor')
+      setError(t('locationUnsupported'))
       return
     }
 
@@ -100,11 +110,11 @@ export function RouteStep({
       (err) => {
         console.error('Geolocation error:', err)
         setLocationStatus('error')
-        setError('Konum alınamadı. Lütfen konum izni verin.')
+        setError(t('locationError'))
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     )
-  }, [onLocationDetected])
+  }, [onLocationDetected, t])
 
   const originAddress = location?.address || 
     (location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : '')
@@ -156,11 +166,11 @@ export function RouteStep({
 
     } catch (err) {
       console.error('Route analysis error:', err)
-      setError('Rota analizi başarısız oldu')
+      setError(t('analysisError'))
       setStatus('error')
       onStatusChange('error')
     }
-  }, [destinationAutocomplete, location, originAddress, onRouteAnalyzed, onStatusChange])
+  }, [destinationAutocomplete, location, originAddress, onRouteAnalyzed, onStatusChange, t])
 
   useEffect(() => {
     if (location && map) {
@@ -178,8 +188,8 @@ export function RouteStep({
             <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
           </div>
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-gray-900">Konumunuz Alınıyor</h2>
-            <p className="text-base text-gray-500">GPS sinyali bekleniyor...</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t('detectingTitle')}</h2>
+            <p className="text-base text-gray-500">{t('detectingSubtitle')}</p>
           </div>
           <div className="flex gap-2">
             {[0, 1, 2].map((i) => (
@@ -204,8 +214,8 @@ export function RouteStep({
             <AlertCircle className="h-16 w-16 text-red-500" />
           </div>
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-gray-900">Konum Alınamadı</h2>
-            <p className="text-base text-gray-500">{error || 'Lütfen konum izni verin'}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t('errorTitle')}</h2>
+            <p className="text-base text-gray-500">{error || t('errorSubtitle')}</p>
           </div>
         </div>
       </div>
@@ -233,14 +243,14 @@ export function RouteStep({
             )}
           </div>
           <h2 className="text-xl font-bold text-gray-900">
-            {status === 'loading' ? 'Rota Analiz Ediliyor...' :
-             status === 'success' ? 'Rota Hazır!' :
-             status === 'error' ? 'Hata Oluştu' : 'Nereye Gidiyorsunuz?'}
+            {status === 'loading' ? t('header.loading') :
+             status === 'success' ? t('header.success') :
+             status === 'error' ? t('header.error') : t('header.idle')}
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            {status === 'idle' ? 'Varış noktasını yazın' :
-             status === 'loading' ? 'Trafik bilgileri alınıyor...' :
-             status === 'success' ? 'Trafik ve yol bilgileri alındı' : error || ''}
+            {status === 'idle' ? t('subheader.idle') :
+             status === 'loading' ? t('subheader.loading') :
+             status === 'success' ? t('subheader.success') : error || t('subheader.error')}
           </p>
         </div>
 
@@ -252,79 +262,82 @@ export function RouteStep({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-700 truncate">
-                {originAddress || 'Konum alınıyor...'}
+                {originAddress || t('originLoading')}
               </p>
             </div>
           </div>
         </div>
 
         {/* Destination Input */}
-        <LoadScript
-          googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-          libraries={libraries}
-        >
-          <div className="px-4 pb-2 flex-shrink-0">
-            <Autocomplete
-              onLoad={onDestinationAutocompleteLoad}
-              onPlaceChanged={onDestinationPlaceChanged}
-              options={{
-                types: ['establishment', 'geocode'],
-                fields: ['place_id', 'geometry', 'name', 'formatted_address']
-              }}
-            >
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-                  <MapPin className="h-4 w-4 text-white" />
-                </div>
-                <Input
-                  placeholder="Varış adresini yazın..."
-                  value={destinationInput}
-                  onChange={(e) => setDestinationInput(e.target.value)}
-                  className="h-12 text-base pl-14 pr-4 rounded-xl bg-white border-2 border-gray-200 focus:border-purple-500"
-                  disabled={status === 'loading' || !location}
-                />
-              </div>
-            </Autocomplete>
-          </div>
-
-          {/* Map */}
-          <div className="flex-1 px-4 pb-2 min-h-[120px]">
-            <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm">
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={center}
-                zoom={12}
-                onLoad={onMapLoad}
+        {isLoaded ? (
+          <>
+            <div className="px-4 pb-2 flex-shrink-0">
+              <Autocomplete
+                onLoad={onDestinationAutocompleteLoad}
+                onPlaceChanged={onDestinationPlaceChanged}
                 options={{
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                  fullscreenControl: false,
-                  zoomControl: false
+                  types: ['establishment', 'geocode'],
+                  fields: ['place_id', 'geometry', 'name', 'formatted_address']
                 }}
               >
-                {location && !directionsResponse && (
-                  <Marker
-                    position={{ lat: location.latitude, lng: location.longitude }}
-                    icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-white" />
+                  </div>
+                  <Input
+                    placeholder={t('destinationPlaceholder')}
+                    value={destinationInput}
+                    onChange={(e) => setDestinationInput(e.target.value)}
+                    className="h-12 text-base pl-14 pr-4 rounded-xl bg-white border-2 border-gray-200 focus:border-purple-500"
+                    disabled={status === 'loading' || !location}
                   />
-                )}
-                {directionsResponse && (
-                  <DirectionsRenderer
-                    directions={directionsResponse}
-                    options={{
-                      suppressMarkers: false,
-                      polylineOptions: {
-                        strokeColor: '#6366F1',
-                        strokeWeight: 5,
-                        strokeOpacity: 0.8
-                      }
-                    }}
-                  />
-                )}
-              </GoogleMap>
+                </div>
+              </Autocomplete>
             </div>
+
+            {/* Map */}
+            <div className="flex-1 px-4 pb-2 min-h-[120px]">
+              <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm">
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={center}
+                  zoom={12}
+                  onLoad={onMapLoad}
+                  options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: false,
+                    zoomControl: false
+                  }}
+                >
+                  {location && !directionsResponse && (
+                    <Marker
+                      position={{ lat: location.latitude, lng: location.longitude }}
+                      icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
+                    />
+                  )}
+                  {directionsResponse && (
+                    <DirectionsRenderer
+                      directions={directionsResponse}
+                      options={{
+                        suppressMarkers: false,
+                        polylineOptions: {
+                          strokeColor: '#6366F1',
+                          strokeWeight: 5,
+                          strokeOpacity: 0.8
+                        }
+                      }}
+                    />
+                  )}
+                </GoogleMap>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 px-4 pb-2 min-h-[120px] flex items-center justify-center">
+            <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
           </div>
-        </LoadScript>
+        )}
 
         {/* Success Stats */}
         {status === 'success' && routeData && (
@@ -333,21 +346,21 @@ export function RouteStep({
               <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
                 <Car className="h-4 w-4 text-orange-500 mx-auto mb-1" />
                 <p className="text-sm font-bold text-gray-900">
-                  {routeData.traffic_density === 'low' ? 'Düşük' :
-                   routeData.traffic_density === 'medium' ? 'Orta' :
-                   routeData.traffic_density === 'high' ? 'Yüksek' : 'Çok Yüksek'}
+                  {routeData.traffic_density === 'low' ? t('trafficDensity.low') :
+                   routeData.traffic_density === 'medium' ? t('trafficDensity.medium') :
+                   routeData.traffic_density === 'high' ? t('trafficDensity.high') : t('trafficDensity.very_high')}
                 </p>
-                <p className="text-xs text-gray-500">Trafik</p>
+                <p className="text-xs text-gray-500">{t('trafficLabel')}</p>
               </div>
               <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
                 <Gauge className="h-4 w-4 text-blue-500 mx-auto mb-1" />
                 <p className="text-sm font-bold text-gray-900">{routeData.average_speed}</p>
-                <p className="text-xs text-gray-500">km/h</p>
+                <p className="text-xs text-gray-500">{t('speedLabel')}</p>
               </div>
               <div className="bg-white/80 rounded-xl p-2 mobile-card text-center">
                 <Navigation className="h-4 w-4 text-purple-500 mx-auto mb-1" />
                 <p className="text-sm font-bold text-gray-900">{routeData.speed_limit}</p>
-                <p className="text-xs text-gray-500">Limit</p>
+                <p className="text-xs text-gray-500">{t('limitLabel')}</p>
               </div>
             </div>
           </div>
@@ -360,7 +373,7 @@ export function RouteStep({
               onClick={onNext}
               className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              İleri
+              {tCommon('next')}
             </button>
           </div>
         )}

@@ -1,5 +1,162 @@
 import { AccidentPredictionInput, AccidentRiskPrediction } from '@/types/dataset'
 
+type Locale = 'tr' | 'en'
+
+const messageTranslations: Record<string, string> = {
+  // Weather
+  '☁️ Bulutlu hava - görüş mesafesi azalmış olabilir': '☁️ Cloudy - visibility may be reduced',
+  '🌧️ Yağışlı hava - yollar kaygan, takip mesafesini artırın': '🌧️ Rainy - roads are slippery, increase following distance',
+  '🌫️ Sisli hava - görüş ciddi şekilde kısıtlı, sis farı kullanın': '🌫️ Foggy - severely limited visibility, use fog lights',
+  '❄️ Karlı hava - buzlanma riski var, yavaş sürün': '❄️ Snowy - ice risk, drive slowly',
+  '⛈️ Fırtına - seyahati mümkünse erteleyin': '⛈️ Storm - postpone travel if possible',
+  '🥶 Dondurucu soğuk - buzlanma riski': '🥶 Freezing cold - ice risk',
+  '🌡️ Aşırı sıcak - dikkat dağılabilir': '🌡️ Extreme heat - distraction risk',
+  '👁️ Görüş mesafesi çok düşük': '👁️ Very low visibility',
+  '👁️ Görüş mesafesi düşük': '👁️ Low visibility',
+  '💨 Şiddetli rüzgar - direksiyon hakimiyetine dikkat': '💨 Strong wind - watch steering control',
+  '💨 Kuvvetli rüzgar': '💨 Windy conditions',
+  '✅ Hava koşulları uygun': '✅ Weather conditions are good',
+  'Dondurucu soğuk': 'Freezing cold',
+  'Aşırı sıcak': 'Extreme heat',
+  'Çok düşük görüş': 'Very low visibility',
+  'Düşük görüş': 'Low visibility',
+  'Şiddetli rüzgar': 'Strong wind',
+  'Kuvvetli rüzgar': 'Windy conditions',
+  // Traffic
+  '🚗 Yoğun trafik - takip mesafesine dikkat edin': '🚗 Heavy traffic - keep safe distance',
+  '🚗 Çok yoğun trafik - sabırlı olun ve güvenli mesafe bırakın': '🚗 Very heavy traffic - stay patient and keep distance',
+  '🚗 Yoğun araç trafiği': '🚗 High vehicle volume',
+  '🚗 Orta yoğunlukta trafik': '🚗 Medium traffic',
+  '✅ Trafik akışı normal': '✅ Traffic flow is normal',
+  'Aşırı hız': 'Severe speeding',
+  'Hız aşımı': 'Speeding',
+  'Hafif hız aşımı': 'Light speeding',
+  'Yoğun araç trafiği': 'High vehicle volume',
+  'Orta yoğunlukta trafik': 'Medium traffic',
+  // Road
+  '🛣️ Yol durumu orta - dikkatli sürün': '🛣️ Fair road condition - drive carefully',
+  '🛣️ Yol durumu kötü - çukur ve bozuklara dikkat': '🛣️ Poor road condition - watch for potholes',
+  '🛣️ Yüksek hızlı otoyol - mesafe koruyun': '🛣️ High-speed highway - maintain distance',
+  '🛤️ Kırsal yol - aydınlatma yetersiz olabilir': '🛤️ Rural road - lighting may be poor',
+  '🚧 Tek şeritli yol - sollama zorlaşır': '🚧 Single-lane road - overtaking is difficult',
+  '🛣️ Çok şeritli yol - şerit değiştirirken dikkat': '🛣️ Multi-lane road - be careful changing lanes',
+  '⚠️ Yol ver kavşağı - önceliğe dikkat': '⚠️ Yield intersection - watch right of way',
+  '🔄 Dönel kavşak - dönüş yönüne dikkat': '🔄 Roundabout - mind the flow direction',
+  '✅ Yol koşulları uygun': '✅ Road conditions are fine',
+  'Otoyol': 'Highway',
+  'Kırsal yol': 'Rural road',
+  'Tek şerit': 'Single lane',
+  'Çok şeritli': 'Multi-lane',
+  'Yol ver işareti': 'Yield sign',
+  'Dönel kavşak': 'Roundabout',
+  // Time
+  '⏰ Saat yoğun trafik saati - sabırlı olun': '⏰ Rush hour - stay patient',
+  '🌙 Gece sürüşü - görüş azalmış, uykuya dikkat': '🌙 Night driving - reduced visibility, stay alert',
+  '🌅 Sabah trafiği - güneş gözünüze gelebilir': '🌅 Morning traffic - sun glare possible',
+  '🌆 Akşam trafiği - yorgunluk artmış olabilir': '🌆 Evening traffic - fatigue may be higher',
+  '📅 Hafta sonu - beklenmedik trafik olabilir': '📅 Weekend - unexpected traffic possible',
+  '🎉 Tatil günü - alkollü sürücülere dikkat': '🎉 Holiday - watch for impaired drivers',
+  '❄️ Kış mevsimi - erken karanlık, buzlanma riski': '❄️ Winter season - early darkness, ice risk',
+  '✅ Zaman koşulları uygun': '✅ Time conditions are favorable',
+  'Gece sürüşü': 'Night driving',
+  'Sabah trafiği': 'Morning traffic',
+  'Akşam trafiği': 'Evening traffic',
+  'Hafta sonu': 'Weekend',
+  'Tatil günü': 'Holiday',
+  'Kış mevsimi': 'Winter season',
+  // Location
+  '🏙️ Şehir içi - yaya ve bisikletlilere dikkat': '🏙️ Urban area - watch for pedestrians and cyclists',
+  '🌾 Kırsal bölge - hayvan geçişine dikkat': '🌾 Rural area - watch for animals',
+  '🏫 Okul bölgesi - çocuklara dikkat, yavaşlayın': '🏫 School zone - watch for children, slow down',
+  '🚧 İnşaat bölgesi - işçilere dikkat, işaretleri takip edin': '🚧 Construction zone - mind workers, follow signs',
+  '✅ Konum koşulları uygun': '✅ Location conditions are fine',
+  'Okul bölgesi': 'School zone',
+  'İnşaat bölgesi': 'Construction zone',
+  // Driver
+  '🍺 Alkol tespit edildi - refleksleriniz yavaşlamış olabilir': '🍺 Alcohol detected - your reflexes may be slower',
+  '🍺 Orta seviye alkol - ARAÇ KULLANMAYIN': '🍺 Moderate alcohol - DO NOT DRIVE',
+  '🍺 Yüksek alkol - KRİTİK TEHLİKE, kesinlikle kullanmayın': '🍺 High alcohol - CRITICAL DANGER, do not drive',
+  '🍺 Ağır sarhoşluk - AŞIRI TEHLİKE, acil yardım alın': '🍺 Severe intoxication - EXTREME DANGER, seek help',
+  '😐 Normal yorgunluk seviyesi': '😐 Normal fatigue level',
+  '😴 Yorgunsunuz - 15-20 dk mola verin': '😴 You are tired - take a 15-20 min break',
+  '😴 Çok yorgunsunuz - seyahati erteleyin veya şoför değiştirin': '😴 Very tired - postpone travel or change driver',
+  '🔰 Orta seviye tecrübe - dikkatli sürün': '🔰 Intermediate experience - drive carefully',
+  '🔰 Acemi sürücü - zorlu koşullarda ekstra dikkat': '🔰 New driver - extra caution in tough conditions',
+  '🔴 Emniyet kemeri takılı değil - kaza anında ölüm riski 30x artar!': '🔴 Seatbelt not fastened - fatality risk increases 30x',
+  '🔧 Araç bakımı yapılmamış - lastik, fren, yağ kontrolü yapın': '🔧 Vehicle not maintained - check tires, brakes, oil',
+  'İyi sürücü ve araç koşulları': 'Good driver and vehicle conditions',
+  'Normal yorgunluk': 'Normal fatigue',
+  'Yorgun': 'Tired',
+  'Çok yorgun': 'Very tired',
+  'Orta tecrübe': 'Intermediate experience',
+  'Acemi sürücü': 'New driver',
+  'KEMER YOK': 'NO SEATBELT',
+  'Araç kontrol edilmemiş': 'Vehicle not checked',
+  // Recommendations
+  'İşte alkol kullanmayınız. Yasal sınırı aşıyorsunuz.': 'Do not drive after drinking. You are over the legal limit.',
+  '⚠️ Ehliyet iptali + Ceza riski!': '⚠️ License revocation + fine risk!',
+  '🚕 Taksi veya toplu taşıma kullan': '🚕 Use a taxi or public transport',
+  '⚠️ Yasal sınırın altında, yine de dikkat!': '⚠️ Below legal limit, still be careful!',
+  "🔴 Kemer tak! KKTC'de zorunlu": '🔴 Wear a seatbelt! Mandatory in KKTC',
+  '😴 Çok yorgunsun, sürme!': "😴 You're very tired, don't drive!",
+  '😴 Yorgunsun, 15 dk mola ver': '😴 You are tired, take a 15 min break',
+  '🔧 Araç bakımını kontrol et': '🔧 Check vehicle maintenance',
+  '🔰 Yeni sürücü: Gündüz sür': '🔰 New driver: drive in daylight',
+  '🌧️ Yağmurda hız %20 azalt': '🌧️ Reduce speed by 20% in rain',
+  '❄️ Buzda ani fren yapma': '❄️ Avoid sudden braking on ice',
+  '🌫️ Siste kısa far kullan': '🌫️ Use low beams in fog',
+  '⛈️ Fırtınada park et, bekle': '⛈️ Park and wait during storms',
+  '🚗 3 sn takip mesafesi koru': '🚗 Keep a 3-second following distance',
+  '🐢 Çok yavaş, trafiği engelleme': "🐢 Too slow, don't block traffic",
+  '🌙 Gece farlarını kontrol et': '🌙 Check your lights at night',
+  '⏰ Yoğun saat: Sabırlı ol': '⏰ Rush hour: stay patient',
+  '🏫 Okul bölgesi: Yavaşla': '🏫 School zone: slow down',
+  '🚧 İnşaat: İşaretleri takip et': '🚧 Construction: follow the signs',
+  '⚠️ Yüksek risk: Seyahati ertele': '⚠️ High risk: postpone the trip',
+  '✅ Güvenli sürüş, iyi yolculuklar': '✅ Safe driving, have a good trip'
+}
+
+const patternTranslations: Array<{ pattern: RegExp; translate: (match: RegExpMatchArray) => string }> = [
+  {
+    pattern: /Hız limiti çok aşılmış \((\d+)\s*km\/h\)/,
+    translate: (m) => `🚨 Speed limit heavily exceeded (${m[1]} km/h)`
+  },
+  {
+    pattern: /Hız limiti aşılmış \((\d+)\s*km\/h\)/,
+    translate: (m) => `⚠️ Speed limit exceeded (${m[1]} km/h)`
+  },
+  {
+    pattern: /Hafif hız aşımı \((\d+)\s*km\/h\)/,
+    translate: (m) => `⚠️ Slight overspeed (${m[1]} km/h)`
+  },
+  {
+    pattern: /Hız limitini aştın! \((\d+)\s*km\/h\)/,
+    translate: (m) => `🚨 You exceeded the speed limit! (${m[1]} km/h)`
+  },
+  {
+    pattern: /Limiti aştın: (\d+)\s*km\/h/,
+    translate: (m) => `⚠️ Limit exceeded: ${m[1]} km/h`
+  }
+]
+
+function translateMessage(message: string, locale: Locale): string {
+  if (locale !== 'en') return message
+  if (messageTranslations[message]) {
+    return messageTranslations[message]
+  }
+
+  for (const { pattern, translate } of patternTranslations) {
+    const match = message.match(pattern)
+    if (match) return translate(match)
+  }
+
+  return message
+}
+
+function translateList(messages: string[], locale: Locale): string[] {
+  return messages.map(msg => translateMessage(msg, locale))
+}
+
 interface RiskFactor {
   name: string
   weight: number
@@ -7,7 +164,7 @@ interface RiskFactor {
   reason: string
 }
 
-export function predictAccidentRisk(input: AccidentPredictionInput): AccidentRiskPrediction {
+export function predictAccidentRisk(input: AccidentPredictionInput, locale: Locale = 'tr'): AccidentRiskPrediction {
   const riskFactors: RiskFactor[] = []
 
   // Weather risk scoring
@@ -59,8 +216,8 @@ export function predictAccidentRisk(input: AccidentPredictionInput): AccidentRis
     risk_level: riskLevel,
     risk_score: Math.round(normalizedScore),
     confidence: Math.round(confidence),
-    contributing_factors: contributingFactors,
-    recommendations: recommendations
+    contributing_factors: translateList(contributingFactors, locale),
+    recommendations: translateList(recommendations, locale)
   }
 }
 

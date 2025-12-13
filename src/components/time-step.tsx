@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { CheckCircle } from 'lucide-react'
 
 interface TimeContext {
@@ -17,6 +18,9 @@ interface TimeStepProps {
 }
 
 export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps) {
+  const t = useTranslations('timeStep')
+  const tCommon = useTranslations('common')
+
   const hasCalledRef = useRef(false)
 
   useEffect(() => {
@@ -27,16 +31,7 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
   }, [])
 
   const getDayName = (day: string) => {
-    const days: Record<string, string> = {
-      monday: 'Pazartesi',
-      tuesday: 'Salı',
-      wednesday: 'Çarşamba',
-      thursday: 'Perşembe',
-      friday: 'Cuma',
-      saturday: 'Cumartesi',
-      sunday: 'Pazar'
-    }
-    return days[day] || day
+    return tCommon(`days.${day}` as const)
   }
 
   return (
@@ -49,8 +44,8 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
 
         {/* Title */}
         <div className="space-y-3">
-          <h2 className="text-2xl font-bold text-gray-900">Zaman Bilgileri</h2>
-          <p className="text-base text-gray-500">Otomatik tespit edildi</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('title')}</h2>
+          <p className="text-base text-gray-500">{t('subtitle')}</p>
         </div>
 
         {/* Time Info Grid */}
@@ -59,26 +54,26 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
             <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
               <span className="text-2xl block mb-1">🕐</span>
               <p className="text-xl font-bold text-gray-900">{timeContext.hour_of_day}:00</p>
-              <p className="text-xs text-gray-500">Saat</p>
+              <p className="text-xs text-gray-500">{t('hour')}</p>
             </div>
             <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
               <span className="text-2xl block mb-1">📅</span>
               <p className="text-base font-bold text-gray-900">{getDayName(timeContext.day_of_week)}</p>
-              <p className="text-xs text-gray-500">Gün</p>
+              <p className="text-xs text-gray-500">{t('day')}</p>
             </div>
             <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
               <span className="text-2xl block mb-1">📆</span>
               <p className="text-xl font-bold text-gray-900">{timeContext.month}</p>
-              <p className="text-xs text-gray-500">Ay</p>
+              <p className="text-xs text-gray-500">{t('month')}</p>
             </div>
             <div className={`rounded-2xl p-3 mobile-card text-center ${
               timeContext.is_rush_hour ? 'bg-orange-100' : 'bg-green-50'
             }`}>
               <span className="text-2xl block mb-1">{timeContext.is_rush_hour ? '🚗' : '✅'}</span>
               <p className="text-base font-bold text-gray-900">
-                {timeContext.is_rush_hour ? 'Yoğun' : 'Sakin'}
+                {timeContext.is_rush_hour ? t('rush') : t('calm')}
               </p>
-              <p className="text-xs text-gray-500">Trafik</p>
+              <p className="text-xs text-gray-500">{t('traffic')}</p>
             </div>
           </div>
         </div>
@@ -89,7 +84,7 @@ export function TimeStep({ timeContext, onStatusChange, onNext }: TimeStepProps)
             onClick={onNext}
             className="w-full mobile-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold"
           >
-            İleri
+            {tCommon('next')}
           </button>
         </div>
       </div>

@@ -1,0 +1,210 @@
+{
+  "app": {
+    "name": "DRIVO",
+    "tagline": "Road Safety Assistant",
+    "description": "AI-powered road safety analysis"
+  },
+  "stepper": {
+    "routeTitle": "Route",
+    "routeDescription": "Where are you going?",
+    "weatherTitle": "Weather",
+    "weatherDescription": "Fetching conditions",
+    "timeTitle": "Time",
+    "timeDescription": "Time context",
+    "safetyTitle": "Safety",
+    "safetyDescription": "Driver safety"
+  },
+  "home": {
+    "description": "Make every trip safer with AI-powered road safety analysis.",
+    "features": {
+      "autoLocationTitle": "Auto Location",
+      "autoLocationSubtitle": "Instant GPS detection",
+      "weatherTitle": "Weather",
+      "weatherSubtitle": "Real-time data",
+      "trafficTitle": "Traffic Analysis",
+      "trafficSubtitle": "Live congestion",
+      "riskTitle": "Risk Score",
+      "riskSubtitle": "Analysis of 26 parameters"
+    }
+  },
+  "steps": {
+    "route": "Route",
+    "weather": "Weather",
+    "time": "Time",
+    "safety": "Safety"
+  },
+  "route": {
+    "title": "Where are you going?",
+    "subtitle": "Let us analyze your route",
+    "destination": "Enter destination address...",
+    "analyzing": "Analyzing route...",
+    "ready": "Route Ready!"
+  },
+  "weather": {
+    "title": "Weather Conditions",
+    "fetching": "Fetching weather data..."
+  },
+  "safety": {
+    "seatbelt": "Is your seatbelt fastened?",
+    "alcohol": "Have you consumed alcohol?",
+    "fatigue": "How are you feeling?"
+  },
+  "results": {
+    "title": "Risk Analysis",
+    "confidence": "Calculated with {value}% confidence",
+    "factors": "Things to Watch Out For",
+    "recommendations": "Recommendations",
+    "newAnalysis": "Start New Analysis"
+  },
+  "risk": {
+    "veryLow": "Very Low",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "veryHigh": "Very High",
+    "score": "Risk Score",
+    "label": "Risk"
+  },
+  "wizard": {
+    "calculatingTitle": "Running Analysis",
+    "calculatingSubtitle": "Processing 26 parameters...",
+    "badges": {
+      "location": "✓ Location",
+      "weather": "✓ Weather",
+      "route": "✓ Route"
+    },
+    "stats": {
+      "location": "Location",
+      "weather": "Weather",
+      "traffic": "Traffic",
+      "time": "Time"
+    }
+  },
+  "routeStep": {
+    "locationUnsupported": "Your browser does not support geolocation",
+    "locationError": "Location could not be fetched. Please enable location access.",
+    "detectingTitle": "Getting Your Location",
+    "detectingSubtitle": "Waiting for GPS signal...",
+    "errorTitle": "Location Unavailable",
+    "errorSubtitle": "Please enable location access",
+    "header": {
+      "idle": "Where are you going?",
+      "loading": "Analyzing the route...",
+      "success": "Route Ready!",
+      "error": "Error Occurred"
+    },
+    "subheader": {
+      "idle": "Enter your destination",
+      "loading": "Fetching traffic data...",
+      "success": "Traffic and road data retrieved",
+      "error": "Please enable location access"
+    },
+    "originLoading": "Fetching location...",
+    "destinationPlaceholder": "Enter destination address...",
+    "trafficLabel": "Traffic",
+    "analysisError": "Route analysis failed",
+    "trafficDensity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "very_high": "Very High"
+    },
+    "speedLabel": "km/h",
+    "limitLabel": "Limit"
+  },
+  "weatherStep": {
+    "waitingForLocation": "Waiting for location data...",
+    "title": "Weather",
+    "errorTitle": "Data Unavailable",
+    "loadingSubtitle": "Fetching data...",
+    "errorSubtitle": "Default values will be used",
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "windUnit": "km/h",
+    "visibility": "km visibility",
+    "errorMessage": "Weather data could not be fetched",
+    "labels": {
+      "clear": "Clear",
+      "cloudy": "Cloudy",
+      "rain": "Rainy",
+      "snow": "Snowy",
+      "fog": "Foggy",
+      "storm": "Stormy"
+    }
+  },
+  "timeStep": {
+    "title": "Time Details",
+    "subtitle": "Detected automatically",
+    "hour": "Hour",
+    "day": "Day",
+    "month": "Month",
+    "traffic": "Traffic",
+    "rush": "Busy",
+    "calm": "Calm"
+  },
+  "safetyStep": {
+    "titles": {
+      "seatbelt": "Seatbelt",
+      "alcohol": "Alcohol Status",
+      "fatigue": "How do you feel?",
+      "complete": "Completed!"
+    },
+    "subtitles": {
+      "seatbelt": "Is your seatbelt fastened?",
+      "alcoholIntro": "Have you consumed alcohol in the last 24 hours?",
+      "alcoholDrink": "What did you drink?",
+      "alcoholCount": "How many?",
+      "fatigue": "Select your fatigue level",
+      "complete": "Risk analysis is starting..."
+    },
+    "options": {
+      "seatbeltYes": "Yes, Fastened",
+      "seatbeltNo": "No",
+      "alcoholNo": "No, I haven't",
+      "alcoholYes": "Yes, I have"
+    },
+    "drinkTypes": {
+      "bira": "Beer",
+      "sarap": "Wine",
+      "raki": "Rakı",
+      "viski": "Whiskey",
+      "votka": "Vodka",
+      "kokteyl": "Cocktail"
+    },
+    "drinkSelected": "{drink} selected",
+    "drinkCount": "How many?",
+    "fatigueOptions": {
+      "fresh": "Energetic",
+      "normal": "Normal",
+      "tired": "Tired",
+      "very_tired": "Very Tired"
+    },
+    "startAnalysis": "Start Analysis"
+  },
+  "demo": {
+    "scenarios": {
+      "ideal": "Ideal",
+      "rain": "Rain",
+      "alcohol": "Alcohol",
+      "storm": "Storm",
+      "school": "School"
+    },
+    "startYourAnalysis": "Do Your Own Analysis"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "next": "Next",
+    "back": "Back",
+    "loading": "Loading...",
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
+  }
+}

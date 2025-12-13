@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { CheckCircle, AlertTriangle } from 'lucide-react'
 
 export interface SafetyData {
@@ -21,12 +22,12 @@ interface DriverSafetyStepProps {
 type QuestionStep = 'seatbelt' | 'alcohol' | 'fatigue' | 'complete'
 
 const DRINK_TYPES = [
-  { id: 'bira', emoji: '🍺', name: 'Bira' },
-  { id: 'sarap', emoji: '🍷', name: 'Şarap' },
-  { id: 'raki', emoji: '🥃', name: 'Rakı' },
-  { id: 'viski', emoji: '🥃', name: 'Viski' },
-  { id: 'votka', emoji: '🍸', name: 'Votka' },
-  { id: 'kokteyl', emoji: '🍹', name: 'Kokteyl' }
+  { id: 'bira', emoji: '🍺' },
+  { id: 'sarap', emoji: '🍷' },
+  { id: 'raki', emoji: '🥃' },
+  { id: 'viski', emoji: '🥃' },
+  { id: 'votka', emoji: '🍸' },
+  { id: 'kokteyl', emoji: '🍹' }
 ]
 
 const DRINK_COUNTS = [1, 2, 3, 4, 5]
@@ -56,6 +57,8 @@ export function DriverSafetyStep({
   onStatusChange,
   onNext 
 }: DriverSafetyStepProps) {
+  const t = useTranslations('safetyStep')
+
   const [questionStep, setQuestionStep] = useState<QuestionStep>('seatbelt')
   const [safetyData, setSafetyData] = useState<SafetyData>({
     seatbelt_usage: true,
@@ -91,7 +94,8 @@ export function DriverSafetyStep({
     setSelectedDrinkCount(count)
     if (selectedDrinkType) {
       const level = getAlcoholLevel(selectedDrinkType, count)
-      const details = `${count} ${DRINK_TYPES.find(d => d.id === selectedDrinkType)?.name || ''}`
+      const drinkName = t(`drinkTypes.${selectedDrinkType}` as const)
+      const details = `${count} ${drinkName}`
       setSafetyData(prev => ({ 
         ...prev, 
         alcohol_consumption: level,
@@ -130,18 +134,18 @@ export function DriverSafetyStep({
         {/* Title */}
         <div className="space-y-3">
           <h2 className="text-2xl font-bold text-gray-900">
-            {questionStep === 'seatbelt' ? 'Emniyet Kemeri' :
-             questionStep === 'alcohol' ? 'Alkol Durumu' :
-             questionStep === 'fatigue' ? 'Nasıl Hissediyorsunuz?' :
-             'Tamamlandı!'}
+            {questionStep === 'seatbelt' ? t('titles.seatbelt') :
+             questionStep === 'alcohol' ? t('titles.alcohol') :
+             questionStep === 'fatigue' ? t('titles.fatigue') :
+             t('titles.complete')}
           </h2>
           <p className="text-base text-gray-500">
-            {questionStep === 'seatbelt' ? 'Kemerinizi taktınız mı?' :
-             questionStep === 'alcohol' && !showAlcoholSelector ? 'Son 24 saatte alkol aldınız mı?' :
-             questionStep === 'alcohol' && showAlcoholSelector && !selectedDrinkType ? 'Ne içtiniz?' :
-             questionStep === 'alcohol' && showAlcoholSelector && selectedDrinkType ? 'Kaç adet?' :
-             questionStep === 'fatigue' ? 'Yorgunluk seviyenizi seçin' :
-             'Risk analizi başlıyor...'}
+            {questionStep === 'seatbelt' ? t('subtitles.seatbelt') :
+             questionStep === 'alcohol' && !showAlcoholSelector ? t('subtitles.alcoholIntro') :
+             questionStep === 'alcohol' && showAlcoholSelector && !selectedDrinkType ? t('subtitles.alcoholDrink') :
+             questionStep === 'alcohol' && showAlcoholSelector && selectedDrinkType ? t('subtitles.alcoholCount') :
+             questionStep === 'fatigue' ? t('subtitles.fatigue') :
+             t('subtitles.complete')}
           </p>
         </div>
 
@@ -175,14 +179,14 @@ export function DriverSafetyStep({
               className="w-full mobile-btn bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-3"
             >
               <CheckCircle className="h-6 w-6" />
-              <span>Evet, Takılı</span>
+              <span>{t('options.seatbeltYes')}</span>
             </button>
             <button
               onClick={() => handleSeatbeltAnswer(false)}
               className="w-full mobile-btn bg-white border-2 border-orange-300 text-orange-700 flex items-center justify-center gap-3"
             >
               <AlertTriangle className="h-6 w-6" />
-              <span>Hayır</span>
+              <span>{t('options.seatbeltNo')}</span>
             </button>
           </div>
         )}
@@ -195,14 +199,14 @@ export function DriverSafetyStep({
               className="w-full mobile-btn bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-3"
             >
               <CheckCircle className="h-6 w-6" />
-              <span>Hayır, Almadım</span>
+              <span>{t('options.alcoholNo')}</span>
             </button>
             <button
               onClick={() => handleAlcoholAnswer(true)}
               className="w-full mobile-btn bg-white border-2 border-orange-300 text-orange-700 flex items-center justify-center gap-3"
             >
               <AlertTriangle className="h-6 w-6" />
-              <span>Evet, Aldım</span>
+              <span>{t('options.alcoholYes')}</span>
             </button>
           </div>
         )}
@@ -210,7 +214,7 @@ export function DriverSafetyStep({
         {/* Alcohol Selector - Drink Type */}
         {questionStep === 'alcohol' && showAlcoholSelector && !selectedDrinkType && (
           <div className="w-full max-w-sm space-y-4 animate-fade-in">
-            <p className="text-sm text-gray-500 mb-2">Ne içtiniz?</p>
+            <p className="text-sm text-gray-500 mb-2">{t('subtitles.alcoholDrink')}</p>
             <div className="grid grid-cols-3 gap-3">
               {DRINK_TYPES.map(drink => (
                 <button
@@ -219,7 +223,7 @@ export function DriverSafetyStep({
                   className="mobile-btn bg-white border-2 border-gray-200 hover:border-orange-400 text-gray-700 flex flex-col items-center justify-center py-4"
                 >
                   <span className="text-3xl mb-1">{drink.emoji}</span>
-                  <span className="text-sm">{drink.name}</span>
+                  <span className="text-sm">{t(`drinkTypes.${drink.id}` as const)}</span>
                 </button>
               ))}
             </div>
@@ -229,7 +233,7 @@ export function DriverSafetyStep({
         {/* Alcohol Selector - Drink Count */}
         {questionStep === 'alcohol' && showAlcoholSelector && selectedDrinkType && !selectedDrinkCount && (
           <div className="w-full max-w-sm space-y-4 animate-fade-in">
-            <p className="text-sm text-gray-500 mb-2">Kaç adet?</p>
+            <p className="text-sm text-gray-500 mb-2">{t('drinkCount')}</p>
             <div className="flex justify-center gap-3">
               {DRINK_COUNTS.map(count => (
                 <button
@@ -242,7 +246,8 @@ export function DriverSafetyStep({
               ))}
             </div>
             <p className="text-xs text-gray-400 text-center mt-2">
-              {DRINK_TYPES.find(d => d.id === selectedDrinkType)?.emoji} {DRINK_TYPES.find(d => d.id === selectedDrinkType)?.name} seçildi
+              {DRINK_TYPES.find(d => d.id === selectedDrinkType)?.emoji}{' '}
+              {t('drinkSelected', { drink: t(`drinkTypes.${selectedDrinkType}` as const) })}
             </p>
           </div>
         )}
@@ -256,28 +261,28 @@ export function DriverSafetyStep({
                 className="mobile-btn bg-green-500 hover:bg-green-600 text-white flex flex-col items-center justify-center py-6"
               >
                 <span className="text-4xl mb-2">😊</span>
-                <span className="text-sm">Dinç</span>
+                <span className="text-sm">{t('fatigueOptions.fresh')}</span>
               </button>
               <button
                 onClick={() => handleFatigueAnswer('normal')}
                 className="mobile-btn bg-white border-2 border-gray-300 text-gray-700 flex flex-col items-center justify-center py-6"
               >
                 <span className="text-4xl mb-2">😐</span>
-                <span className="text-sm">Normal</span>
+                <span className="text-sm">{t('fatigueOptions.normal')}</span>
               </button>
               <button
                 onClick={() => handleFatigueAnswer('tired')}
                 className="mobile-btn bg-white border-2 border-orange-300 text-orange-700 flex flex-col items-center justify-center py-6"
               >
                 <span className="text-4xl mb-2">😪</span>
-                <span className="text-sm">Yorgun</span>
+                <span className="text-sm">{t('fatigueOptions.tired')}</span>
               </button>
               <button
                 onClick={() => handleFatigueAnswer('very_tired')}
                 className="mobile-btn bg-white border-2 border-red-300 text-red-700 flex flex-col items-center justify-center py-6"
               >
                 <span className="text-4xl mb-2">😴</span>
-                <span className="text-sm">Çok Yorgun</span>
+                <span className="text-sm">{t('fatigueOptions.very_tired')}</span>
               </button>
             </div>
           </div>
@@ -312,7 +317,7 @@ export function DriverSafetyStep({
               onClick={onNext}
               className="w-full mobile-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              Analizi Başlat
+              {t('startAnalysis')}
             </button>
           </div>
         )}

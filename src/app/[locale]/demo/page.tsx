@@ -1,16 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import { AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react'
+
 import { RiskMeter } from '@/components/risk-meter'
 import { predictAccidentRisk } from '@/lib/prediction-engine'
 import { AccidentPredictionInput } from '@/types/dataset'
-import { AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface Scenario {
   id: number
-  title: string
+  titleKey: 'ideal' | 'rain' | 'alcohol' | 'storm' | 'school'
   icon: string
   location: string
   input: AccidentPredictionInput
@@ -19,7 +21,7 @@ interface Scenario {
 const scenarios: Scenario[] = [
   {
     id: 1,
-    title: 'İdeal',
+    titleKey: 'ideal',
     icon: '☀️',
     location: 'Girne',
     input: {
@@ -53,7 +55,7 @@ const scenarios: Scenario[] = [
   },
   {
     id: 2,
-    title: 'Yağmur',
+    titleKey: 'rain',
     icon: '🌧️',
     location: 'Lefkoşa',
     input: {
@@ -87,7 +89,7 @@ const scenarios: Scenario[] = [
   },
   {
     id: 3,
-    title: 'Alkol',
+    titleKey: 'alcohol',
     icon: '🍺',
     location: 'Mağusa',
     input: {
@@ -122,7 +124,7 @@ const scenarios: Scenario[] = [
   },
   {
     id: 4,
-    title: 'Fırtına',
+    titleKey: 'storm',
     icon: '❄️',
     location: 'Dağlar',
     input: {
@@ -156,7 +158,7 @@ const scenarios: Scenario[] = [
   },
   {
     id: 5,
-    title: 'Okul',
+    titleKey: 'school',
     icon: '🏫',
     location: 'Lefkoşa',
     input: {
@@ -199,18 +201,23 @@ const weatherEmoji: Record<string, string> = {
   storm: '⛈️'
 }
 
-const trafficLabel: Record<string, string> = {
-  low: 'Düşük',
-  medium: 'Orta',
-  high: 'Yüksek',
-  very_high: 'Çok Yüksek'
-}
-
 export default function DemoPage() {
+  const locale = useLocale()
+  const tResults = useTranslations('results')
+  const tDemo = useTranslations('demo')
+  const tRoute = useTranslations('routeStep')
+
   const [activeScenario, setActiveScenario] = useState(0)
   
   const scenario = scenarios[activeScenario]
-  const prediction = predictAccidentRisk(scenario.input)
+  const prediction = predictAccidentRisk(scenario.input, locale as 'tr' | 'en')
+
+  const trafficLabels = useMemo(() => ({
+    low: tRoute('trafficDensity.low'),
+    medium: tRoute('trafficDensity.medium'),
+    high: tRoute('trafficDensity.high'),
+    very_high: tRoute('trafficDensity.very_high')
+  }), [tRoute])
 
   return (
     <div className="app-container bg-gradient-to-b from-slate-50 via-blue-50/30 to-indigo-50/50 flex flex-col md:bg-gradient-to-br md:from-slate-100 md:via-blue-50 md:to-indigo-100 md:items-center md:justify-center">
@@ -231,7 +238,7 @@ export default function DemoPage() {
             >
               <span className="text-xl">{s.icon}</span>
               <span className={`text-xs font-medium ${activeScenario === index ? 'text-gray-900' : 'text-gray-500'}`}>
-                {s.title}
+                {tDemo(`scenarios.${s.titleKey}` as const)}
               </span>
             </button>
           ))}
@@ -247,9 +254,9 @@ export default function DemoPage() {
               size={180}
             />
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">Risk Analizi</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{tResults('title')}</h2>
               <p className="text-base text-gray-500">
-                {prediction.confidence}% güvenle hesaplandı
+                {tResults('confidence', { value: prediction.confidence })}
               </p>
             </div>
           </div>
@@ -266,7 +273,7 @@ export default function DemoPage() {
             </div>
             <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
               <span className="text-2xl">🚗</span>
-              <p className="text-xs text-gray-500 mt-1 capitalize">{trafficLabel[scenario.input.traffic_density]}</p>
+              <p className="text-xs text-gray-500 mt-1 capitalize">{trafficLabels[scenario.input.traffic_density]}</p>
             </div>
             <div className="bg-white/80 rounded-2xl p-3 mobile-card text-center">
               <span className="text-2xl">🕐</span>
@@ -279,7 +286,7 @@ export default function DemoPage() {
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
-                Dikkat Edilmesi Gerekenler
+                {tResults('factors')}
               </h3>
               <div className="space-y-2">
                 {prediction.contributing_factors.map((warning, index) => (
@@ -298,7 +305,7 @@ export default function DemoPage() {
           <div className="space-y-3">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              Öneriler
+              {tResults('recommendations')}
             </h3>
             <div className="space-y-2">
               {prediction.recommendations.map((rec, index) => (
@@ -315,10 +322,10 @@ export default function DemoPage() {
 
           {/* Button */}
           <div className="pt-4 safe-area-bottom">
-            <Link href="/">
+            <Link href={`/${locale}`}>
               <Button className="w-full mobile-btn bg-gray-900 hover:bg-gray-800 text-white">
                 <RotateCcw className="h-5 w-5 mr-2" />
-                Kendi Analizini Yap
+                {tDemo('startYourAnalysis')}
               </Button>
             </Link>
           </div>

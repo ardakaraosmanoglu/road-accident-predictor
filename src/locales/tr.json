@@ -1,0 +1,210 @@
+{
+  "app": {
+    "name": "DRIVO",
+    "tagline": "Yol Güvenliği Asistanı",
+    "description": "Yapay zeka destekli yol güvenliği analizi"
+  },
+  "stepper": {
+    "routeTitle": "Rota",
+    "routeDescription": "Nereye gidiyorsunuz?",
+    "weatherTitle": "Hava Durumu",
+    "weatherDescription": "Hava bilgileri alınıyor",
+    "timeTitle": "Zaman",
+    "timeDescription": "Zaman bilgileri",
+    "safetyTitle": "Güvenlik",
+    "safetyDescription": "Sürücü güvenliği"
+  },
+  "home": {
+    "description": "Yapay zeka destekli yol güvenliği analizi ile seyahatinizi daha güvenli hale getirin.",
+    "features": {
+      "autoLocationTitle": "Otomatik Konum",
+      "autoLocationSubtitle": "GPS ile anlık tespit",
+      "weatherTitle": "Hava Durumu",
+      "weatherSubtitle": "Gerçek zamanlı veri",
+      "trafficTitle": "Trafik Analizi",
+      "trafficSubtitle": "Anlık yoğunluk",
+      "riskTitle": "Risk Skoru",
+      "riskSubtitle": "26 parametre analizi"
+    }
+  },
+  "steps": {
+    "route": "Rota",
+    "weather": "Hava",
+    "time": "Zaman",
+    "safety": "Güvenlik"
+  },
+  "route": {
+    "title": "Nereye gidiyorsunuz?",
+    "subtitle": "Rotanızı analiz edelim",
+    "destination": "Varış adresini yazın...",
+    "analyzing": "Rota analiz ediliyor...",
+    "ready": "Rota Hazır!"
+  },
+  "weather": {
+    "title": "Hava Durumu",
+    "fetching": "Hava durumu alınıyor..."
+  },
+  "safety": {
+    "seatbelt": "Emniyet kemeriniz takılı mı?",
+    "alcohol": "Alkol aldınız mı?",
+    "fatigue": "Kendinizi nasıl hissediyorsunuz?"
+  },
+  "results": {
+    "title": "Risk Analizi",
+    "confidence": "{value}% güvenle hesaplandı",
+    "factors": "Dikkat Edilmesi Gerekenler",
+    "recommendations": "Öneriler",
+    "newAnalysis": "Yeni Analiz Başlat"
+  },
+  "risk": {
+    "veryLow": "Çok Düşük",
+    "low": "Düşük",
+    "medium": "Orta",
+    "high": "Yüksek",
+    "veryHigh": "Çok Yüksek",
+    "score": "Risk Puanı",
+    "label": "Risk"
+  },
+  "wizard": {
+    "calculatingTitle": "Analiz Yapılıyor",
+    "calculatingSubtitle": "26 parametre işleniyor...",
+    "badges": {
+      "location": "✓ Konum",
+      "weather": "✓ Hava",
+      "route": "✓ Rota"
+    },
+    "stats": {
+      "location": "Konum",
+      "weather": "Hava",
+      "traffic": "Trafik",
+      "time": "Saat"
+    }
+  },
+  "routeStep": {
+    "locationUnsupported": "Tarayıcınız konum servisini desteklemiyor",
+    "locationError": "Konum alınamadı. Lütfen konum izni verin.",
+    "detectingTitle": "Konumunuz Alınıyor",
+    "detectingSubtitle": "GPS sinyali bekleniyor...",
+    "errorTitle": "Konum Alınamadı",
+    "errorSubtitle": "Lütfen konum izni verin",
+    "header": {
+      "idle": "Nereye Gidiyorsunuz?",
+      "loading": "Rota Analiz Ediliyor...",
+      "success": "Rota Hazır!",
+      "error": "Hata Oluştu"
+    },
+    "subheader": {
+      "idle": "Varış noktasını yazın",
+      "loading": "Trafik bilgileri alınıyor...",
+      "success": "Trafik ve yol bilgileri alındı",
+      "error": "Lütfen konum izni verin"
+    },
+    "originLoading": "Konum alınıyor...",
+    "destinationPlaceholder": "Varış adresini yazın...",
+    "trafficLabel": "Trafik",
+    "analysisError": "Rota analizi başarısız oldu",
+    "trafficDensity": {
+      "low": "Düşük",
+      "medium": "Orta",
+      "high": "Yüksek",
+      "very_high": "Çok Yüksek"
+    },
+    "speedLabel": "km/h",
+    "limitLabel": "Limit"
+  },
+  "weatherStep": {
+    "waitingForLocation": "Konum bilgisi bekleniyor...",
+    "title": "Hava Durumu",
+    "errorTitle": "Veri Alınamadı",
+    "loadingSubtitle": "Veriler alınıyor...",
+    "errorSubtitle": "Varsayılan değerler kullanılacak",
+    "temperature": "Sıcaklık",
+    "humidity": "Nem",
+    "windUnit": "km/h",
+    "visibility": "km görüş",
+    "errorMessage": "Hava durumu bilgisi alınamadı",
+    "labels": {
+      "clear": "Açık",
+      "cloudy": "Bulutlu",
+      "rain": "Yağmurlu",
+      "snow": "Karlı",
+      "fog": "Sisli",
+      "storm": "Fırtınalı"
+    }
+  },
+  "timeStep": {
+    "title": "Zaman Bilgileri",
+    "subtitle": "Otomatik tespit edildi",
+    "hour": "Saat",
+    "day": "Gün",
+    "month": "Ay",
+    "traffic": "Trafik",
+    "rush": "Yoğun",
+    "calm": "Sakin"
+  },
+  "safetyStep": {
+    "titles": {
+      "seatbelt": "Emniyet Kemeri",
+      "alcohol": "Alkol Durumu",
+      "fatigue": "Nasıl Hissediyorsunuz?",
+      "complete": "Tamamlandı!"
+    },
+    "subtitles": {
+      "seatbelt": "Kemerinizi taktınız mı?",
+      "alcoholIntro": "Son 24 saatte alkol aldınız mı?",
+      "alcoholDrink": "Ne içtiniz?",
+      "alcoholCount": "Kaç adet?",
+      "fatigue": "Yorgunluk seviyenizi seçin",
+      "complete": "Risk analizi başlıyor..."
+    },
+    "options": {
+      "seatbeltYes": "Evet, Takılı",
+      "seatbeltNo": "Hayır",
+      "alcoholNo": "Hayır, Almadım",
+      "alcoholYes": "Evet, Aldım"
+    },
+    "drinkTypes": {
+      "bira": "Bira",
+      "sarap": "Şarap",
+      "raki": "Rakı",
+      "viski": "Viski",
+      "votka": "Votka",
+      "kokteyl": "Kokteyl"
+    },
+    "drinkSelected": "{drink} seçildi",
+    "drinkCount": "Kaç adet?",
+    "fatigueOptions": {
+      "fresh": "Dinç",
+      "normal": "Normal",
+      "tired": "Yorgun",
+      "very_tired": "Çok Yorgun"
+    },
+    "startAnalysis": "Analizi Başlat"
+  },
+  "demo": {
+    "scenarios": {
+      "ideal": "İdeal",
+      "rain": "Yağmur",
+      "alcohol": "Alkol",
+      "storm": "Fırtına",
+      "school": "Okul"
+    },
+    "startYourAnalysis": "Kendi Analizini Yap"
+  },
+  "common": {
+    "yes": "Evet",
+    "no": "Hayır",
+    "next": "İleri",
+    "back": "Geri",
+    "loading": "Yükleniyor...",
+    "days": {
+      "monday": "Pazartesi",
+      "tuesday": "Salı",
+      "wednesday": "Çarşamba",
+      "thursday": "Perşembe",
+      "friday": "Cuma",
+      "saturday": "Cumartesi",
+      "sunday": "Pazar"
+    }
+  }
+}

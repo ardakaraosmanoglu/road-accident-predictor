@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { 
   Loader2, AlertCircle, 
   Thermometer, Droplets, Wind, Eye 
@@ -24,21 +25,15 @@ const weatherIcons: Record<string, string> = {
   storm: '⛈️'
 }
 
-const weatherLabels: Record<string, string> = {
-  clear: 'Açık',
-  cloudy: 'Bulutlu',
-  rain: 'Yağmurlu',
-  snow: 'Karlı',
-  fog: 'Sisli',
-  storm: 'Fırtınalı'
-}
-
 export function AutoWeatherStep({ 
   location, 
   onWeatherFetched, 
   onStatusChange,
   onNext 
 }: AutoWeatherStepProps) {
+  const t = useTranslations('weatherStep')
+  const tCommon = useTranslations('common')
+
   const [status, setStatus] = useState<'waiting' | 'loading' | 'success' | 'error'>('waiting')
   const [weather, setWeather] = useState<ProcessedWeatherData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -64,7 +59,7 @@ export function AutoWeatherStep({
 
     } catch (err) {
       console.error('Weather fetch error:', err)
-      setError('Hava durumu bilgisi alınamadı')
+      setError(t('errorMessage'))
       setStatus('error')
       onStatusChange('error')
     }
@@ -87,7 +82,7 @@ export function AutoWeatherStep({
           <div className="icon-xlarge bg-gray-100">
             <span className="text-5xl">🌤️</span>
           </div>
-          <p className="text-lg text-gray-500">Konum bilgisi bekleniyor...</p>
+          <p className="text-lg text-gray-500">{t('waitingForLocation')}</p>
         </div>
       </div>
     )
@@ -116,14 +111,14 @@ export function AutoWeatherStep({
         {/* Title */}
         <div className="space-y-3">
           <h2 className="text-2xl font-bold text-gray-900">
-            {status === 'loading' ? 'Hava Durumu' :
-             status === 'success' && weather ? weatherLabels[weather.weather_condition] :
-             status === 'error' ? 'Veri Alınamadı' : 'Hava Durumu'}
+            {status === 'loading' ? t('title') :
+             status === 'success' && weather ? t(`labels.${weather.weather_condition}` as const) :
+             status === 'error' ? t('errorTitle') : t('title')}
           </h2>
           <p className="text-base text-gray-500">
-            {status === 'loading' ? 'Veriler alınıyor...' :
+            {status === 'loading' ? t('loadingSubtitle') :
              status === 'success' && weather ? weather.location :
-             status === 'error' ? 'Varsayılan değerler kullanılacak' : ''}
+             status === 'error' ? t('errorSubtitle') : ''}
           </p>
         </div>
 
@@ -137,7 +132,7 @@ export function AutoWeatherStep({
                 </div>
                 <div className="text-left">
                   <p className="text-lg font-bold text-gray-900">{weather.temperature}°</p>
-                  <p className="text-xs text-gray-500">Sıcaklık</p>
+                  <p className="text-xs text-gray-500">{t('temperature')}</p>
                 </div>
               </div>
               <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
@@ -146,7 +141,7 @@ export function AutoWeatherStep({
                 </div>
                 <div className="text-left">
                   <p className="text-lg font-bold text-gray-900">{weather.humidity}%</p>
-                  <p className="text-xs text-gray-500">Nem</p>
+                  <p className="text-xs text-gray-500">{t('humidity')}</p>
                 </div>
               </div>
               <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
@@ -155,7 +150,7 @@ export function AutoWeatherStep({
                 </div>
                 <div className="text-left">
                   <p className="text-lg font-bold text-gray-900">{weather.wind_speed}</p>
-                  <p className="text-xs text-gray-500">km/h</p>
+                  <p className="text-xs text-gray-500">{t('windUnit')}</p>
                 </div>
               </div>
               <div className="bg-white/80 rounded-2xl p-3 mobile-card flex items-center gap-2">
@@ -164,7 +159,7 @@ export function AutoWeatherStep({
                 </div>
                 <div className="text-left">
                   <p className="text-lg font-bold text-gray-900">{weather.visibility}</p>
-                  <p className="text-xs text-gray-500">km görüş</p>
+                  <p className="text-xs text-gray-500">{t('visibility')}</p>
                 </div>
               </div>
             </div>
@@ -198,7 +193,7 @@ export function AutoWeatherStep({
               onClick={onNext}
               className="w-full mobile-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              İleri
+              {tCommon('next')}
             </button>
           </div>
         )}

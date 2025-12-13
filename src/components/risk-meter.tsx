@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 interface RiskMeterProps {
   score: number
   riskLevel: string
@@ -7,6 +9,8 @@ interface RiskMeterProps {
 }
 
 export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
+  const tRisk = useTranslations('risk')
+
   const circumference = Math.PI * (size * 0.8)
   const strokeDasharray = circumference
   const strokeDashoffset = circumference - (score / 100) * circumference
@@ -24,12 +28,12 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
 
   const getRiskLabel = (level: string) => {
     switch (level) {
-      case 'very_low': return 'Çok Düşük'
-      case 'low': return 'Düşük'
-      case 'medium': return 'Orta'
-      case 'high': return 'Yüksek'
-      case 'very_high': return 'Çok Yüksek'
-      default: return 'Bilinmiyor'
+      case 'very_low': return tRisk('veryLow')
+      case 'low': return tRisk('low')
+      case 'medium': return tRisk('medium')
+      case 'high': return tRisk('high')
+      case 'very_high': return tRisk('veryHigh')
+      default: return tRisk('label')
     }
   }
 
@@ -75,7 +79,7 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
             {score}
           </div>
           <div className="text-sm text-gray-600 font-medium">
-            Risk Puanı
+            {tRisk('score')}
           </div>
         </div>
       </div>
@@ -86,7 +90,7 @@ export function RiskMeter({ score, riskLevel, size = 200 }: RiskMeterProps) {
           className="inline-block px-4 py-2 rounded-full text-white font-semibold text-sm"
           style={{ backgroundColor: color }}
         >
-          {label} Risk
+          {label} {tRisk('label')}
         </div>
       </div>
     </div>
