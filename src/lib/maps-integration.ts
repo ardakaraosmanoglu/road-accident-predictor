@@ -139,15 +139,15 @@ export async function fetchRoadInfo(path: string, interpolate = false) {
 
 /**
  * Estimate speed limit based on road type (fallback when Roads API is unavailable)
- * Uses typical Turkish road speed limits
+ * Uses KKTC (North Cyprus) road speed limits
  */
 function estimateSpeedLimitFromRoadType(roadType: RouteAnalysisResult['road_type']): number {
   switch (roadType) {
-    case 'highway': return 120 // Otoyol - Turkish highway speed limit
-    case 'arterial': return 80  // Cadde/Bulvar - Major urban roads
-    case 'collector': return 50 // Toplayıcı yol - Collector roads
-    case 'local': return 40     // Sokak - Local streets
-    case 'rural': return 90     // Kırsal yol - Rural roads
+    case 'highway': return 100  // KKTC otoyol
+    case 'arterial': return 65  // KKTC şehir içi ana yol
+    case 'collector': return 50 // Toplayıcı yol
+    case 'local': return 50     // Sokak
+    case 'rural': return 80     // Şehir dışı
     default: return 50
   }
 }

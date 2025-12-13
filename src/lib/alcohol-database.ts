@@ -22,15 +22,40 @@ export interface AlcoholData {
 }
 
 /**
- * Yasal limitler (Türkiye)
+ * Yasal limitler (KKTC - Kuzey Kıbrıs Türk Cumhuriyeti)
  */
 export const LEGAL_LIMITS = {
-  HUSUSI_ARAC: 0.50, // Promil - Hususi araç yasal limiti
-  TICARI_ARAC: 0.20, // Promil - Ticari araç yasal limiti
-  SAFE_LIMIT: 0.00,  // Güvenli limit (sıfır tolerans önerilir)
+  HUSUSI_ARAC: 0.50, // KKTC yasal limit: 0.50 promil
+  TICARI_ARAC: 0.20, // Ticari araçlar için daha düşük
+  SAFE_LIMIT: 0.00,  // Güvenli limit (önerilen)
 
   // Promil azalma hızı: Ortalama ~0.15 promil/saat
   AVERAGE_METABOLISM_RATE: 0.15
+} as const
+
+/**
+ * KKTC Trafik Yasaları
+ */
+export const KKTC_LAWS = {
+  alcohol: {
+    limit: 0.50,
+    penalty: 'Ehliyet iptali + Para cezası',
+    note: '0.50 promil üzeri YASAKTIR'
+  },
+  seatbelt: {
+    required: true,
+    penalty: "Asgari ücretin %5'i para cezası",
+    note: 'Tüm yolcular için zorunlu'
+  },
+  speed: {
+    urban: 50,
+    rural: 80,
+    highway: 100
+  },
+  smoking: {
+    allowed: false,
+    penalty: "Asgari ücretin %5'i para cezası"
+  }
 } as const
 
 /**
