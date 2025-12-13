@@ -16,7 +16,7 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
 
   const switchLocale = (nextLocale: string) => {
     const segments = pathname.split('/')
-    if (routing.locales.includes(segments[1])) {
+    if (routing.locales.includes(segments[1] as typeof routing.locales[number])) {
       segments[1] = nextLocale
     } else {
       segments.splice(1, 0, nextLocale)

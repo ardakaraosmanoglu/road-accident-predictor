@@ -18,11 +18,11 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale)) {
+  if (!routing.locales.includes(locale as typeof routing.locales[number])) {
     notFound();
   }
 
-  setRequestLocale(locale);
+  setRequestLocale(locale as typeof routing.locales[number]);
 
   const messages = await getMessages();
 
