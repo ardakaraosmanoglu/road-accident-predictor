@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/components/language-switcher'
 
 import { PredictionWizard } from '@/components/prediction-wizard'
+import { Credits } from '@/components/credits'
 import { MapPin, Cloud, Clock, ShieldCheck } from 'lucide-react'
 
 export default function Home() {
@@ -70,6 +71,10 @@ export default function Home() {
               <p className="text-xs text-gray-500">{tHome('features.riskSubtitle')}</p>
             </div>
           </div>
+          
+          <div className="pt-4">
+            <Credits />
+          </div>
         </aside>
 
         {/* Wizard Container */}
@@ -94,10 +99,11 @@ export default function Home() {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 px-4 py-4 md:px-0 md:py-0">
+          <main className="flex-1 px-4 py-4 md:px-0 md:py-0 flex flex-col gap-6">
             <div className="desktop-wizard-container h-full">
               <PredictionWizard />
             </div>
+            <Credits className="md:hidden pb-safe" />
           </main>
         </div>
       </div>
